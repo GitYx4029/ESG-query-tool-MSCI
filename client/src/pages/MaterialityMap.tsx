@@ -406,7 +406,7 @@ export default function MaterialityMap() {
                       >
                         <div
                           className="text-[10px] leading-tight"
-                          style={{ writingMode: "vertical-lr", transform: "rotate(180deg)", height: 80 }}
+                          style={{ writingMode: "vertical-lr", height: 80 }}
                         >
                           {issueNamesCN[issueName] || issueName}
                         </div>
