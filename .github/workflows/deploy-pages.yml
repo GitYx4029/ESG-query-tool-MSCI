@@ -26,10 +26,20 @@ jobs:
         with:
           node-version: 20
           cache: pnpm
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec vite build
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist/public
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
       - id: deployment
         uses: actions/deploy-pages@v4
