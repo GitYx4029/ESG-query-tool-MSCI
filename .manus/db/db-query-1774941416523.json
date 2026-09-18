@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, openId, name, email, role, subscriptionTier, createdAt FROM users ORDER BY createdAt ASC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2UqnEoAHNimbhL5.8f6ae383576b --database iU5gURrSUnaBxwLDP9tjuN --execute SELECT id, openId, name, email, role, subscriptionTier, createdAt FROM users ORDER BY createdAt ASC LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "openId": "Egfe53ay58QaFGxmKQGjkU",
+      "name": "yixinl0519",
+      "email": "yixinl0519@163.com",
+      "role": "user",
+      "subscriptionTier": "free",
+      "createdAt": "2026-03-31 02:21:03"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\trole\tsubscriptionTier\tcreatedAt\n1\tEgfe53ay58QaFGxmKQGjkU\tyixinl0519\tyixinl0519@163.com\tuser\tfree\t2026-03-31 02:21:03\n",
+  "stderr": "",
+  "execution_time_ms": 504
+}
