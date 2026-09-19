@@ -40,28 +40,20 @@ export default function Header() {
             行业查询
           </Link>
           <Link
+            href="/materiality-map"
+            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
+              location === "/materiality-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            }`}
+          >
+            重要性议题地图
+          </Link>
+          <Link
             href="/company"
             className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
               location === "/company" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
             }`}
           >
             企业分析
-          </Link>
-          <Link
-            href="/materiality-map"
-            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-              location === "/materiality-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-            }`}
-          >
-            MSCI 重要性议题地图
-          </Link>
-          <Link
-            href="/drilldowns"
-            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-              location === "/drilldowns" || location.startsWith("/drilldown/") ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
-            }`}
-          >
-            Drilldown 管理
           </Link>
         </nav>
 
@@ -94,6 +86,15 @@ export default function Header() {
               行业查询
             </Link>
             <Link
+              href="/materiality-map"
+              className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
+                location === "/materiality-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              重要性议题地图
+            </Link>
+            <Link
               href="/company"
               className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
                 location === "/company" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
@@ -101,24 +102,6 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               企业分析
-            </Link>
-            <Link
-              href="/materiality-map"
-              className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
-                location === "/materiality-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              MSCI 重要性议题地图
-            </Link>
-            <Link
-              href="/drilldowns"
-              className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
-                location === "/drilldowns" || location.startsWith("/drilldown/") ? "bg-accent text-accent-foreground" : "text-muted-foreground"
-              }`}
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Drilldown 管理
             </Link>
           </nav>
         </div>

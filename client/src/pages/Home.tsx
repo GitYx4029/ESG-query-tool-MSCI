@@ -111,6 +111,30 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Primary entry points */}
+      <section className="container -mt-2 pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Link href="/" className="group rounded-2xl border-2 border-esg-env/30 bg-esg-env-bg/30 p-5 no-underline shadow-sm hover:shadow-md hover:border-esg-env/60 transition-all">
+            <div className="flex items-center justify-between">
+              <div><div className="text-xs font-semibold text-esg-env uppercase tracking-wide">01 · 核心入口</div><h2 className="mt-1 text-xl font-bold text-foreground">行业查询</h2><p className="mt-1 text-sm text-muted-foreground">按 GICS 行业查找关键 ESG 议题</p></div>
+              <Search className="w-7 h-7 text-esg-env group-hover:scale-110 transition-transform" />
+            </div>
+          </Link>
+          <Link href="/materiality-map" className="group rounded-2xl border-2 border-esg-gov/30 bg-esg-gov-bg/30 p-5 no-underline shadow-sm hover:shadow-md hover:border-esg-gov/60 transition-all">
+            <div className="flex items-center justify-between">
+              <div><div className="text-xs font-semibold text-esg-gov uppercase tracking-wide">02 · 核心入口</div><h2 className="mt-1 text-xl font-bold text-foreground">重要性议题地图</h2><p className="mt-1 text-sm text-muted-foreground">查看各子行业议题重要性分布</p></div>
+              <Building2 className="w-7 h-7 text-esg-gov group-hover:scale-110 transition-transform" />
+            </div>
+          </Link>
+          <Link href="/company" className="group rounded-2xl border-2 border-esg-social/30 bg-esg-social-bg/30 p-5 no-underline shadow-sm hover:shadow-md hover:border-esg-social/60 transition-all">
+            <div className="flex items-center justify-between">
+              <div><div className="text-xs font-semibold text-esg-social uppercase tracking-wide">03 · 分析入口</div><h2 className="mt-1 text-xl font-bold text-foreground">企业分析</h2><p className="mt-1 text-sm text-muted-foreground">上传报告，进入 Drilldown 量化分析</p></div>
+              <ArrowRight className="w-7 h-7 text-esg-social group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Link>
+        </div>
+      </section>
+
       {/* ESG Three Pillars Overview */}
       {!showResults && (
         <section className="container py-8">
@@ -255,12 +279,12 @@ export default function Home() {
         <div className="container py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <div>
             数据来源：
-            <a href="https://www.msci.com/data-and-analytics/sustainability-solutions/esg-industry-materiality-map" target="_blank" rel="noopener noreferrer" className="text-esg-gov hover:underline">
+            <a href="https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies" target="_blank" rel="noopener noreferrer" className="text-esg-gov hover:underline">
               MSCI ESG Industry Materiality Map
             </a>
           </div>
           <div>
-            方法学文件更新日期：2026年2月 | 仅供研究参考
+            方法学来源：MSCI 官方方法学资源页（以页面最新版本为准） | 仅供研究参考
           </div>
         </div>
       </footer>

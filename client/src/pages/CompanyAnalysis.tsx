@@ -155,6 +155,14 @@ export default function CompanyAnalysis() {
         </motion.div>
       </section>
 
+      <section className="container pb-6">
+        <Link href="/drilldowns" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 no-underline transition-colors">
+          <FileSpreadsheet className="w-4 h-4" />
+          已上传报告管理（Drilldown 管理）
+          <ChevronRight className="w-4 h-4" />
+        </Link>
+      </section>
+
       {/* Upload Section */}
       <section className="container pb-8">
         <motion.div

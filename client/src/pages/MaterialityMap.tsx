@@ -140,7 +140,7 @@ export default function MaterialityMap() {
               </div>
             </div>
             <a
-              href="https://www.msci.com/data-and-analytics/sustainability-solutions/esg-industry-materiality-map"
+              href="https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-border text-xs text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors no-underline shrink-0"
@@ -489,7 +489,7 @@ export default function MaterialityMap() {
           <div>
             数据来源：
             <a
-              href="https://www.msci.com/data-and-analytics/sustainability-solutions/esg-industry-materiality-map"
+              href="https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies"
               target="_blank"
               rel="noopener noreferrer"
               className="text-esg-gov hover:underline"
@@ -498,7 +498,7 @@ export default function MaterialityMap() {
             </a>
             {" "}·{" "}
             <a
-              href="https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology.pdf"
+              href="https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies"
               target="_blank"
               rel="noopener noreferrer"
               className="text-esg-gov hover:underline"

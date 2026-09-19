@@ -51,7 +51,7 @@ export const solarMethodology: Record<string, IssueMethodology> = {
     issueEN: "Water Stress",
     issueCN: "水资源压力",
     type: "environment",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Water+Stress+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业在水资源压力地区的用水风险敞口及管理能力。半导体与光伏制造行业高度依赖超纯水（UPW），生产过程中水资源消耗强度大，且主要生产基地往往位于水资源紧张地区（如中国西北、东南亚）。MSCI通过曝险得分（Exposure Score）和管理得分（Management Score）综合评估企业的水资源风险。",
     assessmentFramework: "关键议题得分 = 曝险得分 × 管理得分。管理得分由治理与战略得分（Governance & Strategy）、目标得分（Targets）和绩效得分（Performance）加权计算，再扣除争议分。",
     managementIndicators: {
@@ -132,7 +132,7 @@ export const solarMethodology: Record<string, IssueMethodology> = {
     issueEN: "Opportunities in Clean Tech",
     issueCN: "清洁技术机遇",
     type: "environment",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Opportunities+in+Clean+Tech+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业在清洁技术领域的战略布局、研发投入和收入贡献。对于光伏太阳能制造企业，这是最核心的正向ESG议题——企业的主营业务本身即是清洁技术解决方案。MSCI通过清洁技术收入占比、研发投入和战略承诺三个维度综合评估。",
     assessmentFramework: "清洁技术机遇得分由战略得分（Strategy Score）、项目与举措得分（Programs & Initiatives Score）和绩效得分（Performance Score）加权计算。战略得分评估清洁技术战略承诺；项目与举措得分评估研发投入强度；绩效得分基于清洁技术收入占比。",
     managementIndicators: {
@@ -186,7 +186,7 @@ export const solarMethodology: Record<string, IssueMethodology> = {
     issueEN: "Human Capital Development",
     issueCN: "人力资本发展",
     type: "social",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Human+Capital+Development+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业在吸引、培养和留住人才方面的能力。对于半导体与光伏制造行业，人力资本是核心竞争力——技术工人短缺、高离职率和技能断层是行业面临的主要挑战。MSCI通过薪酬结构、培训投入、员工福利和人才保留率等指标综合评估。",
     assessmentFramework: "管理得分由战略得分（Strategy Score）和项目与举措得分（Programs & Initiatives Score）加权计算，再扣除争议分；绩效得分基于员工离职率等量化指标。战略得分评估人才管道战略、申诉机制和员工反馈机制；项目与举措得分评估福利、薪酬结构和培训项目。",
     managementIndicators: {
@@ -282,7 +282,7 @@ export const solarMethodology: Record<string, IssueMethodology> = {
     issueEN: "Supply Chain Labor Standards",
     issueCN: "供应链劳工标准",
     type: "social",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Supply+Chain+Labor+Standards+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业在供应链中执行劳工标准的能力。对于光伏行业，供应链劳工标准是最受国际关注的ESG议题之一——多晶硅主要产自新疆，面临强迫劳动指控的国际压力；此外，供应链延伸至多个发展中国家，童工、强迫劳动等风险不可忽视。MSCI通过供应商审计、行为准则和申诉机制评估企业的供应链管理能力。",
     assessmentFramework: "管理得分 = 实践得分（Practices Score），评估企业政策和举措的完善程度，再扣除争议分。曝险得分基于业务部门曝险和企业特定曝险（供应链劳工风险敞口）。",
     managementIndicators: {
@@ -379,7 +379,7 @@ export const solarMethodology: Record<string, IssueMethodology> = {
     issueEN: "Controversial Sourcing",
     issueCN: "争议性采购",
     type: "social",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Controversial+Sourcing+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业在采购高风险原材料方面的管理能力。对于光伏行业，多晶硅（主要来自新疆）是最核心的争议性原材料——美国《维吾尔强迫劳动预防法》（UFLPA）已将新疆多晶硅列为强迫劳动风险材料，欧盟也正在推进类似立法。此外，银浆（含银）、铟、碲等稀有金属也存在采购争议。MSCI通过溯源能力、认证和政策承诺评估企业的争议性采购风险管理。",
     assessmentFramework: "管理得分基于实践得分（Practices Score），评估企业在争议性原材料采购方面的政策、认证和溯源能力，再扣除争议分。争议性采购议题无单独的绩效得分，主要依赖管理实践评估。",
     managementIndicators: {
@@ -442,7 +442,7 @@ export const solarMethodology: Record<string, IssueMethodology> = {
     issueEN: "Corporate Governance",
     issueCN: "公司治理",
     type: "governance",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Corporate+Governance+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业在董事会结构、薪酬制度、股权控制和会计透明度方面的治理质量。对于中国上市的光伏企业，MSCI特别关注控股股东与中小股东之间的利益平衡、独立董事的实质独立性以及财务信息披露的透明度。",
     assessmentFramework: "公司治理得分由四个子议题加权计算：董事会（Board）、薪酬（Pay）、股权与控制（Ownership & Control）、会计（Accounting）。各子议题再细分为多个具体指标，综合反映企业治理质量。",
     managementIndicators: {

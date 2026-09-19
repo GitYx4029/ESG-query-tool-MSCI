@@ -374,7 +374,7 @@ export default function IndustryDetail() {
         <div className="container py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
           <div>
             数据来源：
-            <a href="https://www.msci.com/data-and-analytics/sustainability-solutions/esg-industry-materiality-map" target="_blank" rel="noopener noreferrer" className="text-esg-gov hover:underline">
+            <a href="https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies" target="_blank" rel="noopener noreferrer" className="text-esg-gov hover:underline">
               MSCI ESG Industry Materiality Map
             </a>
           </div>

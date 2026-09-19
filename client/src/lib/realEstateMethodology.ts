@@ -55,7 +55,7 @@ export const realEstateMethodology: Record<string, IssueMethodology> = {
     issueEN: "Opportunities in Green Building",
     issueCN: "绿色建筑机遇",
     type: "environment",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Opportunities+in+Green+Building+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估房地产企业在绿色建筑方面的管理实践和绩效表现。管理得分基于实践得分（Practices Score）和绩效得分（Performance Score）的加权平均，实践得分采用0-10分制，10分代表最佳实践，0分代表缺乏证据。",
     assessmentFramework: "管理得分 = (实践得分 + 绩效得分) / 2。实践得分评估企业绿色建筑承诺的广度和深度；绩效得分评估企业在绿色认证建筑比例、碳排放、水资源消耗等量化指标上相对于同行的表现。争议扣分（0-5分）从管理得分中扣除。",
     managementIndicators: {
@@ -158,7 +158,7 @@ export const realEstateMethodology: Record<string, IssueMethodology> = {
     issueEN: "Health & Safety",
     issueCN: "健康与安全",
     type: "social",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Health+%26+Safety+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业对工作场所安全的管理以及其运营所在行业和地区的工作场所安全标准。管理得分基于治理与策略得分（Governance & Strategy Score）、目标得分（Targets Score）和绩效得分（Performance Score）的加权平均。",
     assessmentFramework: "管理得分 = f(治理与策略得分, 目标得分, 绩效得分) - 争议扣分。治理与策略得分评估H&S政策范围、审计、高管责任等；目标得分评估安全改善目标的设定；绩效得分评估工伤率、失时事故率、死亡人数等量化指标相对于同行的表现。",
     managementIndicators: {
@@ -277,7 +277,7 @@ export const realEstateMethodology: Record<string, IssueMethodology> = {
     issueEN: "Product Safety & Quality",
     issueCN: "产品安全与质量",
     type: "social",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Product+Safety+%26+Quality+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业面临的产品召回或产品安全问题的风险暴露、供应链和采购体系的强度、制造质量管理以及负责任营销实践。管理得分基于制造与处理得分、营销广告与销售得分、供应链与采购得分以及绩效得分的加权平均。",
     assessmentFramework: "管理得分 = f(制造与处理得分, 营销广告与销售得分, 供应链与采购得分, 绩效得分) - 争议扣分。争议类别包括：产品安全与质量争议、客户欺诈与计费争议、虚假营销争议。争议扣分范围0-5分。",
     managementIndicators: {
@@ -375,7 +375,7 @@ export const realEstateMethodology: Record<string, IssueMethodology> = {
     issueEN: "Corporate Governance",
     issueCN: "公司治理",
     type: "governance",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Board+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业的公司治理结构和实践。公司治理主题（Corporate Governance Theme）包含四个独立的Key Issues：Board（董事会）、Pay（薪酬）、Ownership & Control（所有权与控制）、Accounting（会计）。每个Key Issue都有独立的方法学PDF和评分体系。治理类议题采用flag-based评分方式——每个Key Metric评估是否存在治理缺陷，被标记的缺陷会导致扣分。",
     assessmentFramework: "公司治理主题得分 = 10 - Σ(所有Key Issue扣分)。每个Key Issue的扣分 = Σ(该Key Issue下各Key Metric扣分)。最终0-10分的主题得分通过分数转换公式计算得出。四个Key Issue各有独立的0-10分Key Issue Score。",
     managementIndicators: {
@@ -427,7 +427,7 @@ export const realEstateMethodology: Record<string, IssueMethodology> = {
     issueEN: "Corporate Behavior",
     issueCN: "企业行为",
     type: "governance",
-    methodologyUrl: "https://www.msci.com/documents/1296102/34424357/MSCI+ESG+Ratings+Methodology+-+Business+Ethics+Key+Issue.pdf",
+    methodologyUrl: "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
     overview: "评估企业的商业道德和税务透明度。企业行为主题（Corporate Behavior Theme）包含两个独立的Key Issues：Business Ethics（商业道德）和Tax Transparency（税务透明度）。Business Ethics采用flag-based评分方式，评估企业在反腐败、合规管理等方面的治理实践；Tax Transparency评估企业的税务争议和估计税差。",
     assessmentFramework: "企业行为主题得分 = 10 - Σ(Business Ethics扣分 + Tax Transparency扣分)。Business Ethics评分基于Policies & Practices（政策与实践）和Risk & Controversies（风险与争议）两个类别。Tax Transparency评分基于税务争议和估计税差的组合评估。",
     managementIndicators: {
