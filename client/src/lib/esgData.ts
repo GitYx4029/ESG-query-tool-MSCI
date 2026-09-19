@@ -83,42 +83,89 @@ for (const [pillar, themes] of Object.entries(keyIssueHierarchy)) {
   }
 }
 
+export const MSCI_METHODOLOGY_INDEX_URL = "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies";
+
+// 用户提供的 2026 年议题级方法学 PDF。
+export const methodology2026Urls: Record<string, string> = {
+  "Climate Change Vulnerability": "https://www.msci.com/downloads/documents/access/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies/esg-ratings/esg-key-issue-methodologies/environmental-pillar/climate-change-vulnerability-key-issue.pdf",
+  "Electronic Waste": "https://www.msci.com/downloads/documents/access/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies/esg-ratings/esg-key-issue-methodologies/environmental-pillar/electronic-waste-key-issue.pdf",
+  "Biodiversity & Land Use": "https://www.msci.com/downloads/documents/access/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies/esg-ratings/esg-key-issue-methodologies/environmental-pillar/biodiversity-and-land-use-key-issue.pdf",
+  "Product Carbon Footprint": "https://www.msci.com/downloads/documents/access/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies/esg-ratings/esg-key-issue-methodologies/environmental-pillar/product-carbon-footprint-key-issue.pdf",
+};
+
+const issuePdfUrl = (pillar: "environmental" | "social" | "governance", slug: string) =>
+  `https://www.msci.com/downloads/documents/access/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies/esg-ratings/esg-key-issue-methodologies/${pillar}-pillar/${slug}-key-issue.pdf`;
+
+// 按 MSCI 官方目录格式生成其余议题的议题级 PDF 链接；是否已发布由后续访问结果确认。
+export const methodologyDirectUrls: Record<string, string> = {
+  ...methodology2026Urls,
+  "Carbon Emissions": issuePdfUrl("environmental", "carbon-emissions"),
+  "Financing Environmental Impact": issuePdfUrl("environmental", "financing-environmental-impact"),
+  "Raw Material Sourcing": issuePdfUrl("environmental", "raw-material-sourcing"),
+  "Water Stress": issuePdfUrl("environmental", "water-stress"),
+  "Packaging Material & Waste": issuePdfUrl("environmental", "packaging-material-and-waste"),
+  "Toxic Emissions & Waste": issuePdfUrl("environmental", "toxic-emissions-and-waste"),
+  "Opportunities in Clean Tech": issuePdfUrl("environmental", "opportunities-in-clean-tech"),
+  "Opportunities in Green Building": issuePdfUrl("environmental", "opportunities-in-green-building"),
+  "Opportunities in Renewable Energy": issuePdfUrl("environmental", "opportunities-in-renewable-energy"),
+  "Health & Safety": issuePdfUrl("social", "health-and-safety"),
+  "Human Capital Development": issuePdfUrl("social", "human-capital-development"),
+  "Labor Management": issuePdfUrl("social", "labor-management"),
+  "Supply Chain Labor Standards": issuePdfUrl("social", "supply-chain-labor-standards"),
+  "Chemical Safety": issuePdfUrl("social", "chemical-safety"),
+  "Consumer Financial Protection": issuePdfUrl("social", "consumer-financial-protection"),
+  "Privacy & Data Security": issuePdfUrl("social", "privacy-and-data-security"),
+  "Product Safety & Quality": issuePdfUrl("social", "product-safety-and-quality"),
+  "Responsible Investment": issuePdfUrl("social", "responsible-investment"),
+  "Community Relations": issuePdfUrl("social", "community-relations"),
+  "Controversial Sourcing": issuePdfUrl("social", "controversial-sourcing"),
+  "Access to Finance": issuePdfUrl("social", "access-to-finance"),
+  "Access to Health Care": issuePdfUrl("social", "access-to-health-care"),
+  "Opportunities in Nutrition & Health": issuePdfUrl("social", "opportunities-in-nutrition-and-health"),
+  "Board": issuePdfUrl("governance", "board"),
+  "Pay": issuePdfUrl("governance", "pay"),
+  "Ownership & Control": issuePdfUrl("governance", "ownership-and-control"),
+  "Accounting": issuePdfUrl("governance", "accounting"),
+  "Business Ethics": issuePdfUrl("governance", "business-ethics"),
+  "Tax Transparency": issuePdfUrl("governance", "tax-transparency"),
+};
+
 // 方法学文件链接
 const methodologyUrls: Record<string, string> = {
-  "ESG Ratings Methodology (Core)": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Carbon Emissions": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Climate Change Vulnerability": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Financing Environmental Impact": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Product Carbon Footprint": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Biodiversity & Land Use": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Raw Material Sourcing": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Water Stress": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Electronic Waste": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Packaging Material & Waste": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Toxic Emissions & Waste": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Opportunities in Clean Tech": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Opportunities in Green Building": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Opportunities in Renewable Energy": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Health & Safety": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Human Capital Development": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Labor Management": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Supply Chain Labor Standards": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Chemical Safety": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Consumer Financial Protection": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Privacy & Data Security": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Product Safety & Quality": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Responsible Investment": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Community Relations": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Controversial Sourcing": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Access to Finance": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Access to Health Care": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Opportunities in Nutrition & Health": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Board": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Pay": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Ownership & Control": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Accounting": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Business Ethics": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies",
-  "Tax Transparency": "https://www.msci.com/legal/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies"
+  "ESG Ratings Methodology (Core)": MSCI_METHODOLOGY_INDEX_URL,
+  "Carbon Emissions": MSCI_METHODOLOGY_INDEX_URL,
+  "Climate Change Vulnerability": methodology2026Urls["Climate Change Vulnerability"],
+  "Financing Environmental Impact": MSCI_METHODOLOGY_INDEX_URL,
+  "Product Carbon Footprint": methodology2026Urls["Product Carbon Footprint"],
+  "Biodiversity & Land Use": methodology2026Urls["Biodiversity & Land Use"],
+  "Raw Material Sourcing": MSCI_METHODOLOGY_INDEX_URL,
+  "Water Stress": MSCI_METHODOLOGY_INDEX_URL,
+  "Electronic Waste": methodology2026Urls["Electronic Waste"],
+  "Packaging Material & Waste": MSCI_METHODOLOGY_INDEX_URL,
+  "Toxic Emissions & Waste": MSCI_METHODOLOGY_INDEX_URL,
+  "Opportunities in Clean Tech": MSCI_METHODOLOGY_INDEX_URL,
+  "Opportunities in Green Building": MSCI_METHODOLOGY_INDEX_URL,
+  "Opportunities in Renewable Energy": MSCI_METHODOLOGY_INDEX_URL,
+  "Health & Safety": MSCI_METHODOLOGY_INDEX_URL,
+  "Human Capital Development": MSCI_METHODOLOGY_INDEX_URL,
+  "Labor Management": MSCI_METHODOLOGY_INDEX_URL,
+  "Supply Chain Labor Standards": MSCI_METHODOLOGY_INDEX_URL,
+  "Chemical Safety": MSCI_METHODOLOGY_INDEX_URL,
+  "Consumer Financial Protection": MSCI_METHODOLOGY_INDEX_URL,
+  "Privacy & Data Security": MSCI_METHODOLOGY_INDEX_URL,
+  "Product Safety & Quality": MSCI_METHODOLOGY_INDEX_URL,
+  "Responsible Investment": MSCI_METHODOLOGY_INDEX_URL,
+  "Community Relations": MSCI_METHODOLOGY_INDEX_URL,
+  "Controversial Sourcing": MSCI_METHODOLOGY_INDEX_URL,
+  "Access to Finance": MSCI_METHODOLOGY_INDEX_URL,
+  "Access to Health Care": MSCI_METHODOLOGY_INDEX_URL,
+  "Opportunities in Nutrition & Health": MSCI_METHODOLOGY_INDEX_URL,
+  "Board": MSCI_METHODOLOGY_INDEX_URL,
+  "Pay": MSCI_METHODOLOGY_INDEX_URL,
+  "Ownership & Control": MSCI_METHODOLOGY_INDEX_URL,
+  "Accounting": MSCI_METHODOLOGY_INDEX_URL,
+  "Business Ethics": MSCI_METHODOLOGY_INDEX_URL,
+  "Tax Transparency": MSCI_METHODOLOGY_INDEX_URL
 };
 
 // 议题中文名称映射
@@ -279,7 +326,7 @@ function buildKeyIssues(issueData: Record<string, Record<string, string>>): KeyI
         pillar: pillar as PillarType,
         theme: issueToTheme[issueName] || "Unknown",
         importance: importance as ImportanceLevel,
-        methodologyUrl: methodologyUrls[issueName] || methodologyUrls["ESG Ratings Methodology (Core)"]
+        methodologyUrl: methodologyDirectUrls[issueName] || methodologyUrls[issueName] || methodologyUrls["ESG Ratings Methodology (Core)"]
       });
     }
   }

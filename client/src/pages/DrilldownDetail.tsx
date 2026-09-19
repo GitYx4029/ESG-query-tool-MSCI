@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -7,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Download, Share2, FileBarChart2, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
+import Header from "@/components/Header";
 
 function formatDate(date: Date | string) {
   return new Date(date).toLocaleString("zh-CN", {
@@ -166,10 +166,11 @@ export default function DrilldownDetail() {
   const params = useParams<{ id: string }>();
   const drilldownId = parseInt(params.id ?? "0", 10);
   const { isAuthenticated } = useAuth();
+  const isStaticSite = import.meta.env.BASE_URL !== "/";
 
   const { data: drilldown, isLoading, error } = trpc.drilldown.getDetail.useQuery(
     { drilldownId },
-    { enabled: isAuthenticated && drilldownId > 0 }
+    { enabled: !isStaticSite && isAuthenticated && drilldownId > 0 }
   );
 
   const handleDownload = () => {
@@ -177,6 +178,28 @@ export default function DrilldownDetail() {
     window.open(drilldown.s3FileUrl, "_blank");
     toast.success("正在下载原始文件...");
   };
+
+  if (isStaticSite) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-16 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>企业 Drilldown 分析</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
+              <p>此链接属于需要登录和云端保存的旧报告详情。</p>
+              <p>在当前 GitHub Pages 版本中，请进入“企业分析”并在浏览器本地上传 Excel 文件。</p>
+              <Link href="/company">
+                <Button>进入企业分析</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

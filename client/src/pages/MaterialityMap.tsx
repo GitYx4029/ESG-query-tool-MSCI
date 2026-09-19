@@ -10,9 +10,14 @@ import Header from "@/components/Header";
 import {
   sectors,
   getESKeyIssues,
+  keyIssueHierarchy,
+  methodologyDirectUrls,
+  methodology2026Urls,
+  MSCI_METHODOLOGY_INDEX_URL,
   sectorNamesCN,
   industryNamesCN,
   issueNamesCN,
+  themeNamesCN,
   pillarNamesCN,
   getPillarColor,
   type PillarType,
@@ -51,6 +56,20 @@ const importanceBadgeColors: Record<string, string> = {
   medium: "bg-amber-50 text-amber-700 border border-amber-200",
   low: "bg-slate-50 text-slate-600 border border-slate-200",
 };
+
+const methodologyUpdateRows = Object.entries(keyIssueHierarchy).flatMap(([pillar, themes]) =>
+  Object.entries(themes).flatMap(([theme, issues]) =>
+    issues.map((issue) => ({
+      issue,
+      issueCN: issueNamesCN[issue] || issue,
+      pillar: pillar as PillarType,
+      theme: themeNamesCN[theme] || theme,
+      updated: Boolean(methodology2026Urls[issue]),
+      directUrl: methodologyDirectUrls[issue],
+      url: methodology2026Urls[issue] || methodologyDirectUrls[issue] || MSCI_METHODOLOGY_INDEX_URL,
+    }))
+  )
+).sort((a, b) => Number(b.updated) - Number(a.updated));
 
 export default function MaterialityMap() {
   const [selectedSector, setSelectedSector] = useState<string>("Energy");
@@ -160,7 +179,7 @@ export default function MaterialityMap() {
         >
           <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-xs text-amber-800 leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
-            本页面权重数据基于 MSCI ESG 评级方法学（2024年版）中的权重设定框架估算：高重要性议题系数3×，中重要性2×，低重要性1×；治理支柱固定占比33%，E&S议题合计约67%。官方实际权重需访问 MSCI 官方平台获取。
+            本页面权重数据沿用现有 MSCI ESG 评级框架估算：高重要性议题系数3×，中重要性2×，低重要性1×；治理支柱固定占比33%，E&S议题合计约67%。目前已接入 4 个 2026 年议题级方法学 PDF，其余议题仍待更新；官方实际权重需访问 MSCI 官方平台获取。
           </p>
         </motion.div>
       </section>
@@ -483,6 +502,66 @@ export default function MaterialityMap() {
         </section>
       )}
 
+      {/* Methodology update tracker */}
+      <section className="container pb-8">
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45 }}
+          className="rounded-xl border border-border bg-card p-5"
+        >
+          <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
+            <div>
+              <h2 className="text-base font-bold text-foreground" style={{ fontFamily: "var(--font-sans)" }}>
+                2026 方法学更新状态
+              </h2>
+              <p className="text-xs text-muted-foreground mt-1">
+                已接入 4 项用户提供的 2026 PDF；其他议题已按同一官方目录格式生成议题级链接，待逐项核验是否已发布。
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs">
+              <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">已更新 4</span>
+              <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">待核验 {methodologyUpdateRows.length - 4}</span>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs min-w-[620px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2 pr-3 font-semibold text-muted-foreground">议题</th>
+                  <th className="text-left py-2 px-3 font-semibold text-muted-foreground">支柱 / 主题</th>
+                  <th className="text-left py-2 px-3 font-semibold text-muted-foreground">状态</th>
+                  <th className="text-right py-2 pl-3 font-semibold text-muted-foreground">文件</th>
+                </tr>
+              </thead>
+              <tbody>
+                {methodologyUpdateRows.map((row) => (
+                  <tr key={row.issue} className="border-b border-border/50 last:border-0">
+                    <td className="py-2.5 pr-3 font-medium text-foreground whitespace-nowrap">{row.issueCN}</td>
+                    <td className="py-2.5 px-3 text-muted-foreground whitespace-nowrap">
+                      {pillarNamesCN[row.pillar]} / {row.theme}
+                    </td>
+                    <td className="py-2.5 px-3 whitespace-nowrap">
+                      {row.updated ? (
+                        <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">已接入 · 2026 PDF</span>
+                      ) : (
+                        <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">已生成链接 · 待核验</span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pl-3 text-right whitespace-nowrap">
+                      <a href={row.url} target="_blank" rel="noopener noreferrer" className="text-esg-gov hover:underline">
+                        {row.updated ? "打开 PDF" : "打开议题链接"}
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </motion.div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-border/50 mt-4">
         <div className="container py-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
@@ -503,7 +582,7 @@ export default function MaterialityMap() {
               rel="noopener noreferrer"
               className="text-esg-gov hover:underline"
             >
-              MSCI ESG Ratings Methodology (2024)
+              MSCI 官方方法学资源页
             </a>
           </div>
           <div>权重为基于方法学框架的估算值，仅供研究参考</div>

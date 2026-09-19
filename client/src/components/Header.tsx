@@ -30,27 +30,27 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1.5">
           <Link
             href="/"
-            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-              location === "/" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors no-underline border ${
+              location === "/" ? "bg-esg-env-bg text-esg-env border-esg-env/40 shadow-sm" : "text-foreground border-esg-env/20 bg-esg-env-bg/30 hover:bg-esg-env-bg/60 hover:border-esg-env/40"
             }`}
           >
             行业查询
           </Link>
           <Link
             href="/materiality-map"
-            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-              location === "/materiality-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors no-underline border ${
+              location === "/materiality-map" ? "bg-esg-gov-bg text-esg-gov border-esg-gov/40 shadow-sm" : "text-foreground border-esg-gov/20 bg-esg-gov-bg/30 hover:bg-esg-gov-bg/60 hover:border-esg-gov/40"
             }`}
           >
             重要性议题地图
           </Link>
           <Link
             href="/company"
-            className={`px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-              location === "/company" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+            className={`ml-1 px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
+              location === "/company" || location === "/drilldowns" || location.startsWith("/drilldown/") ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
             }`}
           >
             企业分析
@@ -78,8 +78,8 @@ export default function Header() {
           <nav className="container py-3 flex flex-col gap-1">
             <Link
               href="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
-                location === "/" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+              className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${
+                location === "/" ? "bg-esg-env-bg text-esg-env border-esg-env/40" : "text-foreground border-esg-env/20 bg-esg-env-bg/30"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -87,8 +87,8 @@ export default function Header() {
             </Link>
             <Link
               href="/materiality-map"
-              className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
-                location === "/materiality-map" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+              className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${
+                location === "/materiality-map" ? "bg-esg-gov-bg text-esg-gov border-esg-gov/40" : "text-foreground border-esg-gov/20 bg-esg-gov-bg/30"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -97,7 +97,7 @@ export default function Header() {
             <Link
               href="/company"
               className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
-                location === "/company" ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                location === "/company" || location === "/drilldowns" || location.startsWith("/drilldown/") ? "bg-accent text-accent-foreground" : "text-muted-foreground"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >

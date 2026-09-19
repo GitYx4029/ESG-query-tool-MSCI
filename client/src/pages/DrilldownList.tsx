@@ -50,6 +50,7 @@ import {
   Check,
 } from "lucide-react";
 import { toast } from "sonner";
+import Header from "@/components/Header";
 
 const INDUSTRY_OPTIONS = [
   "Real Estate Management & Development",
@@ -509,17 +510,20 @@ export default function DrilldownList() {
 
   if (isStaticSite) {
     return (
-      <div className="container py-16 max-w-2xl">
-        <Card>
-          <CardHeader>
-            <CardTitle>企业分析</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4 text-sm text-muted-foreground">
-            <p>企业 Drilldown 分析可以直接在“企业分析”页面上传 Excel 文件，并在浏览器本地完成解析。</p>
-            <p>当前 GitHub Pages 为静态展示版本，暂不提供登录、云端保存和分享报告功能。</p>
-            <Link href="/company"><Button>进入企业分析</Button></Link>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container py-16 max-w-2xl">
+          <Card>
+            <CardHeader>
+              <CardTitle>企业分析</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
+              <p>企业 Drilldown 分析可以直接在“企业分析”页面上传 Excel 文件，并在浏览器本地完成解析。</p>
+              <p>当前 GitHub Pages 为静态展示版本，暂不提供登录、云端保存和分享报告功能。</p>
+              <Link href="/company"><Button>进入企业分析</Button></Link>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
