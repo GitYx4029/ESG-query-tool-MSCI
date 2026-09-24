@@ -57,6 +57,8 @@ export interface IndicatorData {
   weight: number; // 百分比
 }
 
+export type DemoScoreProfile = "realEstate" | "semiconductor";
+
 interface RawRow {
   description: string;
   priorScore: number | null;
@@ -262,6 +264,25 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
     weightedAvgKeyIssueScore: avgScoreRow?.lastScore ?? 0,
     pillars,
     rawRows,
+  };
+}
+
+/**
+ * Applies the requested presentation values only to the two built-in demo reports.
+ * Uploaded third-party reports continue to display their parsed scores unchanged.
+ */
+export function applyDemoScoreProfile(data: EsgDrilldownData, profile: DemoScoreProfile): EsgDrilldownData {
+  const targetScores = profile === "realEstate"
+    ? { industryAdjustedScore: 5.7, Environmental: 6.6, Social: 6.8 }
+    : { industryAdjustedScore: 6.1, Environmental: 6.4, Social: 6.2 };
+
+  return {
+    ...data,
+    industryAdjustedScore: targetScores.industryAdjustedScore,
+    pillars: data.pillars.map((pillar) => {
+      const score = targetScores[pillar.name as keyof typeof targetScores];
+      return typeof score === "number" ? { ...pillar, score } : pillar;
+    }),
   };
 }
 

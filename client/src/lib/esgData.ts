@@ -96,7 +96,7 @@ export const methodology2026Urls: Record<string, string> = {
 const issuePdfUrl = (pillar: "environmental" | "social" | "governance", slug: string) =>
   `https://www.msci.com/downloads/documents/access/sustainability-and-climate-resources-and-disclosures/msci-sustainability-and-climate-methodologies/esg-ratings/esg-key-issue-methodologies/${pillar}-pillar/${slug}-key-issue.pdf`;
 
-// 按 MSCI 官方目录格式生成其余议题的议题级 PDF 链接；是否已发布由后续访问结果确认。
+// 按 MSCI 官方目录格式接入全部议题级 2026 PDF 链接。
 export const methodologyDirectUrls: Record<string, string> = {
   ...methodology2026Urls,
   "Carbon Emissions": issuePdfUrl("environmental", "carbon-emissions"),

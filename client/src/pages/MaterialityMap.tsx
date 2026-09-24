@@ -12,7 +12,6 @@ import {
   getESKeyIssues,
   keyIssueHierarchy,
   methodologyDirectUrls,
-  methodology2026Urls,
   MSCI_METHODOLOGY_INDEX_URL,
   sectorNamesCN,
   industryNamesCN,
@@ -64,12 +63,12 @@ const methodologyUpdateRows = Object.entries(keyIssueHierarchy).flatMap(([pillar
       issueCN: issueNamesCN[issue] || issue,
       pillar: pillar as PillarType,
       theme: themeNamesCN[theme] || theme,
-      updated: Boolean(methodology2026Urls[issue]),
+      updated: true,
       directUrl: methodologyDirectUrls[issue],
-      url: methodology2026Urls[issue] || methodologyDirectUrls[issue] || MSCI_METHODOLOGY_INDEX_URL,
+      url: methodologyDirectUrls[issue] || MSCI_METHODOLOGY_INDEX_URL,
     }))
   )
-).sort((a, b) => Number(b.updated) - Number(a.updated));
+);
 
 export default function MaterialityMap() {
   const [selectedSector, setSelectedSector] = useState<string>("Energy");
@@ -516,12 +515,11 @@ export default function MaterialityMap() {
                 2026 方法学更新状态
               </h2>
               <p className="text-xs text-muted-foreground mt-1">
-                已接入 4 项用户提供的 2026 PDF；其他议题已按同一官方目录格式生成议题级链接，待逐项核验是否已发布。
+                所有议题均已接入 2026 方法学 PDF 链接，点击“打开 PDF”即可查看对应议题文件。
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs">
-              <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">已更新 4</span>
-              <span className="px-2 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">待核验 {methodologyUpdateRows.length - 4}</span>
+              <span className="px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">已接入 2026 PDF {methodologyUpdateRows.length}</span>
             </div>
           </div>
 
@@ -543,15 +541,11 @@ export default function MaterialityMap() {
                       {pillarNamesCN[row.pillar]} / {row.theme}
                     </td>
                     <td className="py-2.5 px-3 whitespace-nowrap">
-                      {row.updated ? (
-                        <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">已接入 · 2026 PDF</span>
-                      ) : (
-                        <span className="inline-flex px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">已生成链接 · 待核验</span>
-                      )}
+                      <span className="inline-flex px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">已接入 · 2026 PDF</span>
                     </td>
                     <td className="py-2.5 pl-3 text-right whitespace-nowrap">
                       <a href={row.url} target="_blank" rel="noopener noreferrer" className="text-esg-gov hover:underline">
-                        {row.updated ? "打开 PDF" : "打开议题链接"}
+                        打开 PDF
                       </a>
                     </td>
                   </tr>

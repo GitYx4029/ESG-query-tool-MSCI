@@ -15,7 +15,7 @@ import { Link } from "wouter";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import {
-  parseEsgDrilldown, getRatingColor, getScoreColor, getScoreLabel,
+  parseEsgDrilldown, applyDemoScoreProfile, getRatingColor, getScoreColor, getScoreLabel,
   type EsgDrilldownData, type PillarData, type KeyIssueData, type IndicatorData
 } from "@/lib/parseEsgExcel";
 import {
@@ -59,6 +59,7 @@ interface IssueAnalysisResult {
 }
 
 export default function RealEstateDrilldown() {
+  const isStaticSite = import.meta.env.BASE_URL !== "/";
   const [data, setData] = useState<EsgDrilldownData | null>(null);
   const [fileName, setFileName] = useState<string>("");
   const [dragActive, setDragActive] = useState(false);
@@ -97,9 +98,10 @@ export default function RealEstateDrilldown() {
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       const buf = bytes.buffer;
 
-      const parsed = parseEsgDrilldown(buf);
+      let parsed = parseEsgDrilldown(buf);
       const nameMatch = pendingName.match(/^([A-Z]+)_/);
       if (nameMatch) parsed.companyName = nameMatch[1];
+      if (/^(ABC(?:企业)?|CMSK)_/i.test(pendingName)) parsed = applyDemoScoreProfile(parsed, "realEstate");
       setData(parsed);
       setFileName(pendingName);
       toast.success("ESG评分报告已自动加载");
@@ -117,9 +119,10 @@ export default function RealEstateDrilldown() {
     }
     try {
       const buf = await file.arrayBuffer();
-      const parsed = parseEsgDrilldown(buf);
+      let parsed = parseEsgDrilldown(buf);
       const nameMatch = file.name.match(/^([A-Z]+)_/);
       if (nameMatch) parsed.companyName = nameMatch[1];
+      if (/^(ABC(?:企业)?|CMSK)_/i.test(file.name)) parsed = applyDemoScoreProfile(parsed, "realEstate");
       setData(parsed);
       setFileName(file.name);
       toast.success("ESG评分报告解析成功");
@@ -160,6 +163,10 @@ export default function RealEstateDrilldown() {
   // 对照分析某个议题
   const analyzeIssue = useCallback(async (issue: KeyIssueData) => {
     if (!reportFile || !data) return;
+    if (isStaticSite) {
+      toast.info("PDF 已成功加载。当前 GitHub Pages 为静态版本，逐条 AI 对照分析需要连接后端服务。");
+      return;
+    }
     setAnalyzingIssue(issue.name);
 
     try {
@@ -203,7 +210,7 @@ export default function RealEstateDrilldown() {
     } finally {
       setAnalyzingIssue(null);
     }
-  }, [reportFile, data, reportFileName, analyzeDisclosure]);
+  }, [reportFile, data, reportFileName, analyzeDisclosure, isStaticSite]);
 
   // 构建Excel行数据的通用函数（支持全部或单个议题）
   const buildExcelRows = useCallback((filterIssueName?: string) => {
@@ -458,6 +465,11 @@ export default function RealEstateDrilldown() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => document.getElementById("report-analysis")?.scrollIntoView({ behavior: "smooth" })}
+                  className="border-esg-gov/40 text-esg-gov hover:bg-esg-gov-bg/40">
+                  <FileText className="w-3.5 h-3.5 mr-1.5" />
+                  ESG 报告对照
+                </Button>
                 {analysisResults.size > 0 && (
                   <Button variant="outline" size="sm" onClick={exportAnalysisToExcel}
                     className="border-green-200 text-green-700 hover:bg-green-50">
@@ -533,15 +545,18 @@ export default function RealEstateDrilldown() {
 
           {/* ESG Report Upload for Analysis */}
           <section className="container pb-4">
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-              className="rounded-xl border border-border bg-card p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <FileText className="w-4 h-4 text-esg-gov" />
-                <h2 className="text-base font-bold text-foreground" style={{ fontFamily: "var(--font-sans)" }}>
+            <motion.div id="report-analysis" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+              className="rounded-xl border-2 border-esg-gov/30 bg-esg-gov-bg/20 p-5 shadow-sm">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-9 h-9 rounded-lg bg-esg-gov text-white flex items-center justify-center">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: "var(--font-sans)" }}>
                   ESG 报告对照分析
                 </h2>
-                <span className="text-xs text-muted-foreground">上传企业ESG报告，逐条对照方法学指标分析披露情况</span>
+                <span className="ml-auto text-xs font-medium text-esg-gov bg-white/70 border border-esg-gov/20 rounded-full px-2 py-1">重点功能</span>
               </div>
+              <p className="text-sm text-muted-foreground mb-4 ml-11">上传企业 ESG 报告，逐条对照方法学指标，分析披露情况。</p>
 
               {!reportFile ? (
                 <div className="flex flex-col sm:flex-row items-center gap-3">
@@ -559,7 +574,7 @@ export default function RealEstateDrilldown() {
                   <FileText className="w-5 h-5 text-esg-gov shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium text-foreground truncate">{reportFileName}</div>
-                    <div className="text-xs text-muted-foreground">已加载，可在下方各议题中点击「对照分析」按钮</div>
+                    <div className="text-xs text-muted-foreground">已加载，可在下方各议题中点击「对照分析」按钮{isStaticSite ? "（静态版仅验证上传，AI分析需后端）" : ""}</div>
                   </div>
                   <Button variant="ghost" size="sm" onClick={() => { setReportFile(null); setReportFileName(""); setAnalysisResults(new Map()); }}>
                     <X className="w-4 h-4" />
