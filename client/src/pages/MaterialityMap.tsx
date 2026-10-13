@@ -17,6 +17,7 @@ import {
   type PillarType,
 } from "@/lib/esgData";
 import { methodologyRegistry } from "@/lib/methodologyRegistry";
+import { importanceColors } from "@/lib/importanceStyle";
 
 const labels: Record<string, string> = {
   high: "高",
@@ -174,7 +175,7 @@ export default function MaterialityMap() {
                       >
                         <span className="flex items-start justify-between gap-2">
                           <span>{issueNamesCN[issue.name] || issue.name}</span>
-                          <span className="text-xs text-muted-foreground shrink-0">
+                          <span className={`inline-flex items-center justify-center min-w-8 px-2 py-0.5 rounded border text-xs font-medium shrink-0 ${importanceColors[issue.importance]}`}>
                             {labels[issue.importance]}
                           </span>
                         </span>
@@ -221,14 +222,19 @@ export default function MaterialityMap() {
                         {industryNamesCN[i.name] || i.name}
                       </Link>
                     </td>
-                    {sectorIssues.map(name => (
-                      <td className="text-center px-2" key={name}>
-                        {labels[
-                          i.keyIssues.find(x => x.name === name)?.importance ||
-                            ""
-                        ] || "—"}
-                      </td>
-                    ))}
+                    {sectorIssues.map(name => {
+                      const level = i.keyIssues.find(x => x.name === name)?.importance;
+                      return (
+                        <td className="text-center px-2" key={name}>
+                          <span
+                            className={level ? `inline-flex items-center justify-center min-w-8 px-2 py-1 rounded border font-medium ${importanceColors[level]}` : "text-slate-400"}
+                            aria-label={level ? undefined : "本工具未列出"}
+                          >
+                            {labels[level || ""] || "—"}
+                          </span>
+                        </td>
+                      );
+                    })}
                   </tr>
                 ))}
               </tbody>

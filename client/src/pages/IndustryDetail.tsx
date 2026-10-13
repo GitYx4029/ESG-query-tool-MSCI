@@ -1,4 +1,3 @@
-import { AnalysisEntryLink } from "@/components/AnalysisGate";
 /*
  * Industry Detail Page - 行业ESG关键议题详情
  * 设计风格：知识图谱风格，ESG三色体系
@@ -14,20 +13,18 @@ import {
   FileText,
   ExternalLink,
   ChevronRight,
-  Download,
-  BarChart3,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import ShareButton from "@/components/ShareButton";
 import FeedbackPrompt from "@/components/FeedbackPrompt";
 import { trackEvent } from "@/lib/community";
 import { methodologyRegistry } from "@/lib/methodologyRegistry";
+import { importanceColors, importanceDotColors } from "@/lib/importanceStyle";
 import Header from "@/components/Header";
 import {
   getAllIndustries,
   getESKeyIssues,
   getGovernanceIssues,
-  getCoreMethodologyUrl,
   sectorNamesCN,
   industryNamesCN,
   pillarNamesCN,
@@ -39,7 +36,6 @@ import {
   type Industry,
   type PillarType,
   type KeyIssue,
-  type ImportanceLevel,
 } from "@/lib/esgData";
 
 const pillarIcons: Record<PillarType, React.ReactNode> = {
@@ -48,19 +44,6 @@ const pillarIcons: Record<PillarType, React.ReactNode> = {
   Governance: <Shield className="w-4 h-4" />,
 };
 
-const importanceColors: Record<ImportanceLevel, string> = {
-  high: "bg-red-50 text-red-700 border-red-200",
-  medium: "bg-amber-50 text-amber-700 border-amber-200",
-  low: "bg-slate-50 text-slate-600 border-slate-200",
-  standard: "bg-slate-50 text-slate-500 border-slate-200",
-};
-
-const importanceDotColors: Record<ImportanceLevel, string> = {
-  high: "bg-red-500",
-  medium: "bg-amber-500",
-  low: "bg-slate-400",
-  standard: "bg-slate-300",
-};
 
 export default function IndustryDetail() {
   const params = useParams<{ name: string }>();
@@ -292,73 +275,6 @@ export default function IndustryDetail() {
           </div>
         </motion.div>
 
-        {/* Core Methodology */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-xl border border-border bg-card p-5"
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
-              <Download className="w-5 h-5 text-muted-foreground" />
-            </div>
-            <div className="flex-1">
-              <h3
-                className="text-base font-bold text-foreground"
-                style={{ fontFamily: "var(--font-sans)" }}
-              >
-                MSCI ESG 评级核心方法学
-              </h3>
-              <p
-                className="text-sm text-muted-foreground mt-1"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                在 MSCI 官方目录中查阅评级框架、权重计算和行业分类等原始文件。
-              </p>
-              <a
-                href={getCoreMethodologyUrl()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-esg-gov text-white text-sm font-medium hover:opacity-90 transition-opacity no-underline"
-              >
-                <FileText className="w-4 h-4" />
-                前往 MSCI 方法学资源目录
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Navigate to Company Analysis */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-        >
-          <AnalysisEntryLink
-            href={`/company?industry=${encodeURIComponent(industry.name)}`}
-            className="block no-underline"
-          >
-            <div className="rounded-xl border border-dashed border-esg-gov/30 bg-esg-gov-bg/20 p-5 hover:border-esg-gov/50 hover:bg-esg-gov-bg/40 transition-all group">
-              <div className="flex items-center gap-3">
-                <BarChart3 className="w-5 h-5 text-esg-gov" />
-                <div className="flex-1">
-                  <h3
-                    className="text-base font-bold text-foreground group-hover:text-esg-gov transition-colors"
-                    style={{ fontFamily: "var(--font-sans)" }}
-                  >
-                    企业分析 · 管理员入口
-                  </h3>
-                  <p className="text-sm text-muted-foreground mt-0.5">
-                    暂仅向管理员开放，目前支持房地产及半导体与半导体设备行业。
-                  </p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-esg-gov group-hover:translate-x-1 transition-all" />
-              </div>
-            </div>
-          </AnalysisEntryLink>
-        </motion.div>
       </section>
 
       <section className="container pb-5">
