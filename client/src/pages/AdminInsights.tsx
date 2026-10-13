@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCommunityToken } from "@/lib/adminSession";
 import Header from "@/components/Header";
-import { adminRequest, hasCommunityApi } from "@/lib/community";
+import { adminRequest, hasCommunityApi, communityOrigin } from "@/lib/community";
 import { APP_VERSION, type FeedbackRecord } from "@shared/community";
 type Summary = {
   periodDays: number;
@@ -23,6 +23,17 @@ const categories: Record<string, string> = {
   other: "其他",
 };
 export default function AdminInsights() {
+  if (communityOrigin?.endsWith(".chatgpt.site")) {
+    return <div><Header /><main className="container py-8 max-w-2xl space-y-4">
+      <h1 className="text-2xl font-bold">项目反馈与使用统计</h1>
+      <p className="text-sm text-muted-foreground">反馈与需求集中保存在项目后台。请使用创建项目时的 ChatGPT 账号登录，只有项目管理员可以查看记录。</p>
+      <a className="inline-flex rounded-lg border px-4 py-3 bg-esg-env text-white" href={`${communityOrigin}/admin`} target="_blank" rel="noopener noreferrer">打开项目管理后台</a>
+      <p className="text-xs text-muted-foreground">可查看近30天匿名统计、记录小红书建议、更新处理状态并导出需求表。</p>
+    </main></div>;
+  }
+  return <LegacyAdminInsights />;
+}
+function LegacyAdminInsights() {
   const [data, setData] = useState<Summary | null>(null),
     [error, setError] = useState("");
   const [token, setToken] = useState(getCommunityToken);

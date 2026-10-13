@@ -1,3 +1,4 @@
+import { AnalysisEntryLink } from "@/components/AnalysisGate";
 /*
  * Home Page - 行业查询主页
  * 设计风格：知识图谱风格，ESG三色体系（绿/橙/蓝）
@@ -185,7 +186,7 @@ export default function Home() {
               <Building2 className="w-7 h-7 text-esg-gov group-hover:scale-110 transition-transform" />
             </div>
           </Link>
-          <Link
+          <AnalysisEntryLink
             href="/company"
             className="group rounded-2xl border-2 border-esg-social/30 bg-esg-social-bg/30 p-5 no-underline shadow-sm hover:shadow-md hover:border-esg-social/60 transition-all"
           >
@@ -203,7 +204,7 @@ export default function Home() {
               </div>
               <ArrowRight className="w-7 h-7 text-esg-social group-hover:translate-x-1 transition-transform" />
             </div>
-          </Link>
+          </AnalysisEntryLink>
         </div>
       </section>
 

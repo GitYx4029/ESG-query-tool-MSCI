@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
-import { useLocation } from "wouter";
+import { createContext, useContext, useEffect, useState, type ReactNode, type ComponentProps } from "react";
+import { Link, useLocation } from "wouter";
 import {
   Dialog,
   DialogContent,
@@ -10,7 +10,6 @@ import Header from "./Header";
 
 import {
   PASSWORD_KEY,
-  getAdminPassword,
   matchesUiPassword,
 } from "@/lib/adminSession";
 const GateContext = createContext<{
@@ -20,12 +19,16 @@ const GateContext = createContext<{
 }>({ unlocked: false, unlock: (_password: string) => false, lock: () => {} });
 
 export function AnalysisGateProvider({ children }: { children: ReactNode }) {
-  const [unlocked, setUnlocked] = useState(() =>
-    matchesUiPassword(getAdminPassword())
-  );
+  // Never restore an old tab's authorization: each entry starts locked.
+  const [unlocked, setUnlocked] = useState(false);
+  const [location] = useLocation();
+  useEffect(() => {
+    sessionStorage.removeItem(PASSWORD_KEY);
+    if (!/^\/(company|drilldowns?|admin)(\/|$)/.test(location))
+      setUnlocked(false);
+  }, [location]);
   const unlock = (password: string) => {
     if (!matchesUiPassword(password)) return false;
-    sessionStorage.setItem(PASSWORD_KEY, password);
     setUnlocked(true);
     return true;
   };
@@ -41,6 +44,12 @@ export function AnalysisGateProvider({ children }: { children: ReactNode }) {
 }
 
 export const useAnalysisGate = () => useContext(GateContext);
+
+// Every visible enterprise-analysis link resets the gate, including same-page clicks.
+export function AnalysisEntryLink({ onClick, ...props }: ComponentProps<typeof Link>) {
+  const { lock } = useAnalysisGate();
+  return <Link {...props} onClick={event => { lock(); onClick?.(event); }} />;
+}
 
 export function ProtectedAnalysis({ children }: { children: ReactNode }) {
   const { unlocked, unlock } = useAnalysisGate();

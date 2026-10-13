@@ -1,3 +1,4 @@
+import { AnalysisEntryLink } from "@/components/AnalysisGate";
 import { useState, useRef } from "react";
 import { Link } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -520,7 +521,7 @@ export default function DrilldownList() {
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <p>企业 Drilldown 分析可以直接在“企业分析”页面上传 Excel 文件，并在浏览器本地完成解析。</p>
               <p>当前 GitHub Pages 为静态展示版本，暂不提供登录、云端保存和分享报告功能。</p>
-              <Link href="/company"><Button>进入企业分析</Button></Link>
+              <AnalysisEntryLink href="/company"><Button>进入企业分析</Button></AnalysisEntryLink>
             </CardContent>
           </Card>
         </div>

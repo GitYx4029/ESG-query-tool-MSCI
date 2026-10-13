@@ -7,6 +7,7 @@ import { Link, useLocation } from "wouter";
 import { Search, Leaf } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "@/hooks/useNavigate";
+import { AnalysisEntryLink } from "./AnalysisGate";
 
 export default function Header() {
   const [location] = useLocation();
@@ -54,7 +55,7 @@ export default function Header() {
           >
             重要性议题地图
           </Link>
-          <Link
+          <AnalysisEntryLink
             href="/company"
             className={`ml-1 px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
               location === "/company" ||
@@ -65,7 +66,7 @@ export default function Header() {
             }`}
           >
             企业分析
-          </Link>
+          </AnalysisEntryLink>
         </nav>
 
         {/* Mobile menu button */}
@@ -126,7 +127,7 @@ export default function Header() {
             >
               重要性议题地图
             </Link>
-            <Link
+            <AnalysisEntryLink
               href="/company"
               className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
                 location === "/company" ||
@@ -138,7 +139,7 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               企业分析
-            </Link>
+            </AnalysisEntryLink>
           </nav>
         </div>
       )}

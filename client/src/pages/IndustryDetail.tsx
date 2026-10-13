@@ -1,3 +1,4 @@
+import { AnalysisEntryLink } from "@/components/AnalysisGate";
 /*
  * Industry Detail Page - 行业ESG关键议题详情
  * 设计风格：知识图谱风格，ESG三色体系
@@ -335,7 +336,7 @@ export default function IndustryDetail() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
         >
-          <Link
+          <AnalysisEntryLink
             href={`/company?industry=${encodeURIComponent(industry.name)}`}
             className="block no-underline"
           >
@@ -356,7 +357,7 @@ export default function IndustryDetail() {
                 <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-esg-gov group-hover:translate-x-1 transition-all" />
               </div>
             </div>
-          </Link>
+          </AnalysisEntryLink>
         </motion.div>
       </section>
 

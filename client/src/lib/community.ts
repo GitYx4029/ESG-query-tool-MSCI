@@ -4,11 +4,12 @@ import {
   type FeedbackInput,
 } from "@shared/community";
 import { getCommunityToken } from "@/lib/adminSession";
+import { defaultCommunityOrigin } from "./backendConfig";
 
 const configuredOrigin = (
   import.meta.env.VITE_COMMUNITY_API_ORIGIN ||
   import.meta.env.VITE_AI_API_ORIGIN ||
-  ""
+  (import.meta.env.BASE_URL === "/" ? "" : defaultCommunityOrigin)
 )
   .trim()
   .replace(/\/+$/, "");

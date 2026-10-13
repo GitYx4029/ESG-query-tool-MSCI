@@ -1,3 +1,4 @@
+import { AnalysisEntryLink } from "@/components/AnalysisGate";
 import { useParams, Link } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
@@ -191,9 +192,9 @@ export default function DrilldownDetail() {
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <p>此链接属于需要登录和云端保存的旧报告详情。</p>
               <p>在当前 GitHub Pages 版本中，请进入“企业分析”并在浏览器本地上传 Excel 文件。</p>
-              <Link href="/company">
+              <AnalysisEntryLink href="/company">
                 <Button>进入企业分析</Button>
-              </Link>
+              </AnalysisEntryLink>
             </CardContent>
           </Card>
         </div>

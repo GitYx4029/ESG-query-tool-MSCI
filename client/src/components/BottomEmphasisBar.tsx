@@ -23,7 +23,7 @@ export default function BottomEmphasisBar() {
             项目管理
           </a>
         </div>
-        {hasCommunityApi ? (
+        {hasCommunityApi && (
           <div>
             <label className="flex gap-2 items-center">
               <input
@@ -40,8 +40,6 @@ export default function BottomEmphasisBar() {
               仅统计功能操作与候选行业，不记录报告、评分、文件名或联系方式。反馈单独保存，联系须经你同意。
             </p>
           </div>
-        ) : (
-          <p>匿名功能统计暂未开启。反馈可通过邮件草稿发送。</p>
         )}
         <p>独立公益学习参考 · 非 MSCI 官方产品 · v1.9.0</p>
       </div>
