@@ -1,5 +1,4 @@
 import {
-  APP_VERSION,
   type CommunityEvent,
   type FeedbackInput,
 } from "@shared/community";
@@ -16,13 +15,6 @@ const configuredOrigin = (
 export const communityOrigin: string | null =
   configuredOrigin || (import.meta.env.BASE_URL === "/" ? "" : null);
 export const hasCommunityApi = communityOrigin !== null;
-const CONSENT_KEY = "esg-anonymous-statistics";
-export const getStatisticsConsent = () =>
-  localStorage.getItem(CONSENT_KEY) === "yes";
-export const setStatisticsConsent = (enabled: boolean) => {
-  localStorage.setItem(CONSENT_KEY, enabled ? "yes" : "no");
-  if (enabled) trackEvent("entry");
-};
 export function pageCategory(): CommunityEvent["page"] {
   const path = window.location.pathname.replace(
     import.meta.env.BASE_URL.replace(/\/$/, ""),
@@ -34,58 +26,18 @@ export function pageCategory(): CommunityEvent["page"] {
     return "analysis";
   return path === "/" ? "home" : "other";
 }
-let session = "";
 export function trackEvent(
-  event: CommunityEvent["event"],
-  data: Partial<
+  _event: CommunityEvent["event"],
+  _data: Partial<
     Pick<
       CommunityEvent,
       "industry" | "issue" | "resultCount" | "status" | "page"
     >
   > = {}
 ) {
-  const params = new URLSearchParams(window.location.search);
-  const source: CommunityEvent["source"] =
-    params.get("utm_source") === "xiaohongshu"
-      ? "xiaohongshu"
-      : params.has("utm_source")
-        ? "other"
-        : "direct";
-  const note = (params.get("note") || "")
-    .replace(/[^a-zA-Z0-9_-]/g, "")
-    .slice(0, 40);
-  // No raw search text, URLs, file names, documents, scores, contacts, or password.
-  let attribution: Pick<CommunityEvent, "source" | "note"> = { source, note };
-  const previous = sessionStorage.getItem("esg-statistics-attribution");
-  if (previous && !params.has("utm_source")) {
-    try {
-      attribution = JSON.parse(previous);
-    } catch {}
-  }
-  sessionStorage.setItem(
-    "esg-statistics-attribution",
-    JSON.stringify(attribution)
-  );
-  if (!hasCommunityApi || !getStatisticsConsent()) return;
-  if (!session) {
-    session =
-      sessionStorage.getItem("esg-statistics-session") || crypto.randomUUID();
-    sessionStorage.setItem("esg-statistics-session", session);
-  }
-  const payload: CommunityEvent = {
-    event,
-    session,
-    version: APP_VERSION,
-    ...attribution,
-    page: pageCategory(),
-    ...data,
-  };
-  void fetch(`${communityOrigin}/api/community/events`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-    keepalive: true,
-  }).catch(() => {});
+  // Collection is paused while the public consent control is removed.
+  // Keep the call sites for future opt-in statistics; never restore old consent.
+  return;
 }
 export async function submitFeedback(input: FeedbackInput) {
   if (!hasCommunityApi) throw new Error("反馈服务尚未连接，可生成反馈邮件。");

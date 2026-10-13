@@ -1,12 +1,5 @@
-import { useState } from "react";
 import FeedbackPrompt from "./FeedbackPrompt";
-import {
-  getStatisticsConsent,
-  setStatisticsConsent,
-  hasCommunityApi,
-} from "@/lib/community";
 export default function BottomEmphasisBar() {
-  const [consent, setConsent] = useState(getStatisticsConsent);
   return (
     <footer className="border-t bg-gray-50 px-4 py-4">
       <div className="container space-y-3 text-xs text-muted-foreground">
@@ -23,24 +16,6 @@ export default function BottomEmphasisBar() {
             项目管理
           </a>
         </div>
-        {hasCommunityApi && (
-          <div>
-            <label className="flex gap-2 items-center">
-              <input
-                type="checkbox"
-                checked={consent}
-                onChange={e => {
-                  setConsent(e.target.checked);
-                  setStatisticsConsent(e.target.checked);
-                }}
-              />
-              允许匿名使用统计（可随时关闭）
-            </label>
-            <p className="mt-1">
-              仅统计功能操作与候选行业，不记录报告、评分、文件名或联系方式。反馈单独保存，联系须经你同意。
-            </p>
-          </div>
-        )}
         <p>独立公益学习参考 · 非 MSCI 官方产品 · v1.9.0</p>
       </div>
     </footer>

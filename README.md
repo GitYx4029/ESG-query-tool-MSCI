@@ -7,4 +7,4 @@
 - [公益版本和反馈统计接入](docs/PUBLIC_PROJECT_SETUP.md)
 - [AI 分析接入](docs/AI_ANALYSIS_SETUP.md)
 
-验证：`npm run check`、`npm test`、`npm run build`。Pages工作流在检查通过后发布前端。集中反馈和自愿匿名统计已接入独立轻量后端；项目后台使用创建项目时的 ChatGPT 账号登录。AI 模型服务仍需另行配置。
+验证：`npm run check`、`npm test`、`npm run build`。Pages工作流在检查通过后发布前端。集中反馈已接入独立轻量后端；匿名统计采集暂时关闭；项目后台使用创建项目时的 ChatGPT 账号登录。AI 模型服务仍需另行配置。
