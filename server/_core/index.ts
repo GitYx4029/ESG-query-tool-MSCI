@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { createCommunityRouter } from "../community";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -30,9 +31,32 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  // Explicit browser origins for a frontend hosted separately on GitHub Pages.
+  const allowedOrigins = new Set(
+    (process.env.AI_ALLOWED_ORIGINS || "")
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean)
+  );
+  app.use("/api/trpc", (req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin && allowedOrigins.has(origin)) {
+      res.setHeader("Access-Control-Allow-Origin", origin);
+      res.setHeader("Access-Control-Allow-Credentials", "true");
+      res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+      res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, X-Admin-Password"
+      );
+      res.setHeader("Vary", "Origin");
+      if (req.method === "OPTIONS") return res.sendStatus(204);
+    }
+    next();
+  });
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.use("/api/community", createCommunityRouter());
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
   // tRPC API

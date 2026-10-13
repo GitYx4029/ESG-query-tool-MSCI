@@ -127,17 +127,31 @@ describe("indicator tooltip data quality", () => {
         expect(tooltip.nameCN, `${key} missing nameCN`).toBeTruthy();
         expect(tooltip.nameEN, `${key} missing nameEN`).toBeTruthy();
         expect(tooltip.definition, `${key} missing definition`).toBeTruthy();
-        expect(tooltip.scoringCriteria, `${key} missing scoringCriteria`).toBeTruthy();
+        expect(
+          tooltip.scoringCriteria,
+          `${key} missing scoringCriteria`
+        ).toBeTruthy();
         expect(tooltip.dataSource, `${key} missing dataSource`).toBeTruthy();
         expect(tooltip.scoreRange, `${key} missing scoreRange`).toBeTruthy();
-        expect(typeof tooltip.directlyFromMethodology, `${key} missing directlyFromMethodology`).toBe("boolean");
+        expect(
+          typeof tooltip.directlyFromMethodology,
+          `${key} missing directlyFromMethodology`
+        ).toBe("boolean");
       }
-      for (const [key, tooltip] of Object.entries(issue.performanceIndicators)) {
+      for (const [key, tooltip] of Object.entries(
+        issue.performanceIndicators
+      )) {
         expect(tooltip.nameCN, `${key} missing nameCN`).toBeTruthy();
         expect(tooltip.nameEN, `${key} missing nameEN`).toBeTruthy();
         expect(tooltip.definition, `${key} missing definition`).toBeTruthy();
-        expect(tooltip.scoringCriteria, `${key} missing scoringCriteria`).toBeTruthy();
-        expect(typeof tooltip.directlyFromMethodology, `${key} missing directlyFromMethodology`).toBe("boolean");
+        expect(
+          tooltip.scoringCriteria,
+          `${key} missing scoringCriteria`
+        ).toBeTruthy();
+        expect(
+          typeof tooltip.directlyFromMethodology,
+          `${key} missing directlyFromMethodology`
+        ).toBe("boolean");
       }
     }
   });
@@ -146,12 +160,20 @@ describe("indicator tooltip data quality", () => {
     for (const issue of Object.values(realEstateMethodology)) {
       for (const [key, tooltip] of Object.entries(issue.managementIndicators)) {
         if (!tooltip.directlyFromMethodology) {
-          expect(tooltip.sourceNote, `${key} is not directly from methodology but missing sourceNote`).toBeTruthy();
+          expect(
+            tooltip.sourceNote,
+            `${key} is not directly from methodology but missing sourceNote`
+          ).toBeTruthy();
         }
       }
-      for (const [key, tooltip] of Object.entries(issue.performanceIndicators)) {
+      for (const [key, tooltip] of Object.entries(
+        issue.performanceIndicators
+      )) {
         if (!tooltip.directlyFromMethodology) {
-          expect(tooltip.sourceNote, `${key} is not directly from methodology but missing sourceNote`).toBeTruthy();
+          expect(
+            tooltip.sourceNote,
+            `${key} is not directly from methodology but missing sourceNote`
+          ).toBeTruthy();
         }
       }
     }
@@ -160,28 +182,36 @@ describe("indicator tooltip data quality", () => {
 
 describe("governance issues are correctly identified as independent Key Issues", () => {
   it("Board should be described as independent Key Issue, not sub-issue", () => {
-    const board = realEstateMethodology.corporate_governance.managementIndicators["Board"];
+    const board =
+      realEstateMethodology.corporate_governance.managementIndicators["Board"];
     expect(board).toBeDefined();
     expect(board.definition).toContain("独立Key Issue");
     expect(board.definition).not.toContain("子议题");
   });
 
   it("Pay should be described as independent Key Issue", () => {
-    const pay = realEstateMethodology.corporate_governance.managementIndicators["Pay"];
+    const pay =
+      realEstateMethodology.corporate_governance.managementIndicators["Pay"];
     expect(pay).toBeDefined();
     expect(pay.definition).toContain("独立Key Issue");
     expect(pay.definition).not.toContain("子议题");
   });
 
   it("Ownership & Control should be described as independent Key Issue", () => {
-    const oc = realEstateMethodology.corporate_governance.managementIndicators["Ownership & Control"];
+    const oc =
+      realEstateMethodology.corporate_governance.managementIndicators[
+        "Ownership & Control"
+      ];
     expect(oc).toBeDefined();
     expect(oc.definition).toContain("独立Key Issue");
     expect(oc.definition).not.toContain("子议题");
   });
 
   it("Accounting should be described as independent Key Issue with correct content", () => {
-    const acc = realEstateMethodology.corporate_governance.managementIndicators["Accounting"];
+    const acc =
+      realEstateMethodology.corporate_governance.managementIndicators[
+        "Accounting"
+      ];
     expect(acc).toBeDefined();
     expect(acc.definition).toContain("独立Key Issue");
     expect(acc.definition).not.toContain("子议题");
@@ -196,13 +226,19 @@ describe("governance issues are correctly identified as independent Key Issues",
 
 describe("Tax Transparency is correctly defined", () => {
   it("should mention Tax Controversies as the key metric", () => {
-    const tt = realEstateMethodology.corporate_behavior.managementIndicators["Tax Transparency"];
+    const tt =
+      realEstateMethodology.corporate_behavior.managementIndicators[
+        "Tax Transparency"
+      ];
     expect(tt).toBeDefined();
     expect(tt.definition).toContain("Tax Controversies");
   });
 
   it("should mention estimated tax gap", () => {
-    const tt = realEstateMethodology.corporate_behavior.managementIndicators["Tax Transparency"];
+    const tt =
+      realEstateMethodology.corporate_behavior.managementIndicators[
+        "Tax Transparency"
+      ];
     expect(tt.definition).toContain("估计税差");
   });
 });
@@ -261,7 +297,7 @@ describe("getMethodologyUrls function", () => {
   });
 });
 
-describe("indicators not directly from methodology are properly flagged", () => {
+describe("methodology provenance flags", () => {
   it("'Green building commitment extends to existing buildings' should be flagged", () => {
     const tooltip = findMethodologyTooltip(
       "Green building commitment extends to existing buildings in portfolio (in addition to new buildings)"
@@ -271,17 +307,21 @@ describe("indicators not directly from methodology are properly flagged", () => 
     expect(tooltip!.sourceNote).toBeTruthy();
   });
 
-  it("'Contractors included in disclosed health and safety metrics' should be flagged", () => {
+  it("recognizes the contractor metric explicitly included in the March 2026 methodology", () => {
     const tooltip = findMethodologyTooltip(
       "Contractors included in disclosed health and safety metrics"
     );
     expect(tooltip).toBeDefined();
-    expect(tooltip!.directlyFromMethodology).toBe(false);
-    expect(tooltip!.sourceNote).toBeTruthy();
+    expect(tooltip!.directlyFromMethodology).toBe(true);
+    expect(tooltip!.definition).toContain(
+      "contractor health and safety performance"
+    );
   });
 
   it("'Certification program for suppliers' should be flagged as composite", () => {
-    const tooltip = findMethodologyTooltip("Certification program for suppliers");
+    const tooltip = findMethodologyTooltip(
+      "Certification program for suppliers"
+    );
     expect(tooltip).toBeDefined();
     expect(tooltip!.directlyFromMethodology).toBe(false);
     expect(tooltip!.sourceNote).toBeTruthy();

@@ -26,7 +26,12 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Install dependencies
         run: npm install --legacy-peer-deps
+      - run: npm run check
+      - run: npm test
       - run: npx vite build
+        env:
+          VITE_AI_API_ORIGIN: ${{ vars.VITE_AI_API_ORIGIN }}
+          VITE_COMMUNITY_API_ORIGIN: ${{ vars.VITE_COMMUNITY_API_ORIGIN }}
       - name: Add single-page route fallback
         run: cp dist/public/index.html dist/public/404.html
       - uses: actions/upload-pages-artifact@v3

@@ -4,7 +4,7 @@
  * 顶部导航栏，包含Logo、搜索入口和导航链接
  */
 import { Link, useLocation } from "wouter";
-import { Search } from "lucide-react";
+import { Search, Leaf } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "@/hooks/useNavigate";
 
@@ -18,9 +18,12 @@ export default function Header() {
       <div className="container flex items-center justify-between h-16">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2.5 no-underline">
-          <img src="https://d2xsxph8kpxj0f.cloudfront.net/310519663376710174/iU5gURrSUnaBxwLDP9tjuN/esg-key-logo-HxZk28DJGUz5aanTJ4ejyZ.webp" alt="ESG Materiality" className="w-9 h-9" />
+          <Leaf aria-hidden="true" className="w-8 h-8 text-esg-env" />
           <div className="flex flex-col">
-            <span className="text-base font-bold text-foreground leading-tight tracking-tight" style={{ fontFamily: "var(--font-sans)" }}>
+            <span
+              className="text-base font-bold text-foreground leading-tight tracking-tight"
+              style={{ fontFamily: "var(--font-sans)" }}
+            >
               ESG Materiality
             </span>
             <span className="text-[10px] text-muted-foreground leading-tight">
@@ -34,7 +37,9 @@ export default function Header() {
           <Link
             href="/"
             className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors no-underline border ${
-              location === "/" ? "bg-esg-env-bg text-esg-env border-esg-env/40 shadow-sm" : "text-foreground border-esg-env/20 bg-esg-env-bg/30 hover:bg-esg-env-bg/60 hover:border-esg-env/40"
+              location === "/"
+                ? "bg-esg-env-bg text-esg-env border-esg-env/40 shadow-sm"
+                : "text-foreground border-esg-env/20 bg-esg-env-bg/30 hover:bg-esg-env-bg/60 hover:border-esg-env/40"
             }`}
           >
             行业查询
@@ -42,7 +47,9 @@ export default function Header() {
           <Link
             href="/materiality-map"
             className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors no-underline border ${
-              location === "/materiality-map" ? "bg-esg-gov-bg text-esg-gov border-esg-gov/40 shadow-sm" : "text-foreground border-esg-gov/20 bg-esg-gov-bg/30 hover:bg-esg-gov-bg/60 hover:border-esg-gov/40"
+              location === "/materiality-map"
+                ? "bg-esg-gov-bg text-esg-gov border-esg-gov/40 shadow-sm"
+                : "text-foreground border-esg-gov/20 bg-esg-gov-bg/30 hover:bg-esg-gov-bg/60 hover:border-esg-gov/40"
             }`}
           >
             重要性议题地图
@@ -50,7 +57,11 @@ export default function Header() {
           <Link
             href="/company"
             className={`ml-1 px-3 py-2 rounded-md text-sm font-medium transition-colors no-underline ${
-              location === "/company" || location === "/drilldowns" || location.startsWith("/drilldown/") ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
+              location === "/company" ||
+              location === "/drilldowns" ||
+              location.startsWith("/drilldown/")
+                ? "bg-accent text-accent-foreground"
+                : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
             }`}
           >
             企业分析
@@ -59,14 +70,31 @@ export default function Header() {
 
         {/* Mobile menu button */}
         <button
-          className="md:hidden p-2 rounded-md hover:bg-accent"
+          aria-label={mobileMenuOpen ? "关闭菜单" : "打开菜单"}
+          aria-expanded={mobileMenuOpen}
+          className="md:hidden p-2 min-h-11 min-w-11 rounded-md hover:bg-accent"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             {mobileMenuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 6h16M4 12h16M4 18h16"
+              />
             )}
           </svg>
         </button>
@@ -79,7 +107,9 @@ export default function Header() {
             <Link
               href="/"
               className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${
-                location === "/" ? "bg-esg-env-bg text-esg-env border-esg-env/40" : "text-foreground border-esg-env/20 bg-esg-env-bg/30"
+                location === "/"
+                  ? "bg-esg-env-bg text-esg-env border-esg-env/40"
+                  : "text-foreground border-esg-env/20 bg-esg-env-bg/30"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -88,7 +118,9 @@ export default function Header() {
             <Link
               href="/materiality-map"
               className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${
-                location === "/materiality-map" ? "bg-esg-gov-bg text-esg-gov border-esg-gov/40" : "text-foreground border-esg-gov/20 bg-esg-gov-bg/30"
+                location === "/materiality-map"
+                  ? "bg-esg-gov-bg text-esg-gov border-esg-gov/40"
+                  : "text-foreground border-esg-gov/20 bg-esg-gov-bg/30"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -97,7 +129,11 @@ export default function Header() {
             <Link
               href="/company"
               className={`px-3 py-2 rounded-md text-sm font-medium no-underline ${
-                location === "/company" || location === "/drilldowns" || location.startsWith("/drilldown/") ? "bg-accent text-accent-foreground" : "text-muted-foreground"
+                location === "/company" ||
+                location === "/drilldowns" ||
+                location.startsWith("/drilldown/")
+                  ? "bg-accent text-accent-foreground"
+                  : "text-muted-foreground"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >

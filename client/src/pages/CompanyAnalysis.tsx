@@ -7,10 +7,23 @@
 import { useState, useCallback, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  Upload, FileSpreadsheet, Building2, ChevronRight,
-  Leaf, Users, Shield, ArrowRight, X, Loader2, Cpu
+  Upload,
+  FileSpreadsheet,
+  Building2,
+  ChevronRight,
+  Leaf,
+  Users,
+  Shield,
+  ArrowRight,
+  X,
+  Loader2,
+  Cpu,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { getServiceToken } from "@/lib/adminSession";
+import { useAnalysisGate } from "@/components/AnalysisGate";
+import { hasAnalysisApi } from "@/lib/apiConfig";
+import { trackEvent } from "@/lib/community";
 import Header from "@/components/Header";
 import { toast } from "sonner";
 import { parseEsgDrilldown } from "@/lib/parseEsgExcel";
@@ -45,8 +58,19 @@ const SUPPORTED_INDUSTRIES = [
     bg: "rgba(22,163,74,0.06)",
     border: "rgba(22,163,74,0.18)",
     pillars: ["环境", "社会", "治理"],
-    description: "涵盖清洁技术机遇、水资源压力、供应链劳工标准、争议性采购等光伏行业核心ESG议题",
-    fileKeywords: ["ja", "solar", "jasolar", "jinkosolar", "longi", "trina", "canadian", "semiconductor", "jinko"],
+    description:
+      "涵盖清洁技术机遇、水资源压力、供应链劳工标准、争议性采购等光伏行业核心ESG议题",
+    fileKeywords: [
+      "ja",
+      "solar",
+      "jasolar",
+      "jinkosolar",
+      "longi",
+      "trina",
+      "canadian",
+      "semiconductor",
+      "jinko",
+    ],
   },
 ];
 
@@ -66,67 +90,93 @@ function detectIndustryPath(fileName: string): string | null {
 
 export default function CompanyAnalysis() {
   const [, navigate] = useLocation();
+  const { lock } = useAnalysisGate();
+  const [serviceToken, setServiceToken] = useState(getServiceToken);
   const [dragActive, setDragActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [pendingFile, setPendingFile] = useState<{ buf: ArrayBuffer; name: string; company: string; b64: string } | null>(null);
+  const [pendingFile, setPendingFile] = useState<{
+    buf: ArrayBuffer;
+    name: string;
+    company: string;
+    b64: string;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 处理上传的Drilldown Excel文件，解析后跳转到对应行业页面
-  const handleFile = useCallback(async (file: File) => {
-    if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
-      toast.error("请上传 .xlsx 或 .xls 格式的 Excel 文件");
-      return;
-    }
-    setIsProcessing(true);
-    try {
-      const buf = await file.arrayBuffer();
-      const parsed = parseEsgDrilldown(buf);
-
-      // 将文件内容转为base64
-      const uint8 = new Uint8Array(buf);
-      let binary = "";
-      uint8.forEach((b) => (binary += String.fromCharCode(b)));
-      const base64 = btoa(binary);
-
-      // 尝试自动识别行业
-      const detectedPath = detectIndustryPath(file.name);
-
-      if (detectedPath) {
-        // 自动跳转
-        sessionStorage.setItem("drilldown_pending_file_name", file.name);
-        sessionStorage.setItem("drilldown_pending_company", parsed.companyName || "");
-        sessionStorage.setItem("drilldown_pending_file_b64", base64);
-        toast.success("文件解析成功，正在跳转...");
-        setTimeout(() => navigate(detectedPath), 400);
-      } else {
-        // 无法识别行业，让用户手动选择
-        setPendingFile({ buf, name: file.name, company: parsed.companyName || "", b64: base64 });
-        toast.info("请选择对应的行业分析模块");
+  const handleFile = useCallback(
+    async (file: File) => {
+      if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
+        toast.error("请上传 .xlsx 或 .xls 格式的 Excel 文件");
+        return;
       }
-    } catch (e) {
-      console.error(e);
-      toast.error("文件解析失败，请确认是 MSCI ESG Ratings Drilldown 格式");
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [navigate]);
+      setIsProcessing(true);
+      try {
+        const buf = await file.arrayBuffer();
+        const parsed = parseEsgDrilldown(buf);
+        trackEvent("upload_parse_result", { status: "success" });
+
+        // 将文件内容转为base64
+        const uint8 = new Uint8Array(buf);
+        let binary = "";
+        uint8.forEach(b => (binary += String.fromCharCode(b)));
+        const base64 = btoa(binary);
+
+        // 尝试自动识别行业
+        const detectedPath: string | null = null; // Select explicitly; file names are not evidence of GICS classification.
+
+        if (detectedPath) {
+          // 自动跳转
+          sessionStorage.setItem("drilldown_pending_file_name", file.name);
+          sessionStorage.setItem(
+            "drilldown_pending_company",
+            parsed.companyName || ""
+          );
+          sessionStorage.setItem("drilldown_pending_file_b64", base64);
+          toast.success("文件解析成功，正在跳转...");
+          setTimeout(() => navigate(detectedPath), 400);
+        } else {
+          // 无法识别行业，让用户手动选择
+          setPendingFile({
+            buf,
+            name: file.name,
+            company: parsed.companyName || "",
+            b64: base64,
+          });
+          toast.info("请选择对应的行业分析模块");
+        }
+      } catch (e) {
+        trackEvent("upload_parse_result", { status: "failure" });
+        console.error(e);
+        toast.error("文件解析失败，请确认是 MSCI ESG Ratings Drilldown 格式");
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [navigate]
+  );
 
   // 用户手动选择行业后跳转
-  const handleIndustrySelect = useCallback((path: string) => {
-    if (!pendingFile) return;
-    sessionStorage.setItem("drilldown_pending_file_name", pendingFile.name);
-    sessionStorage.setItem("drilldown_pending_company", pendingFile.company);
-    sessionStorage.setItem("drilldown_pending_file_b64", pendingFile.b64);
-    toast.success("正在跳转...");
-    setTimeout(() => navigate(path), 300);
-  }, [pendingFile, navigate]);
+  const handleIndustrySelect = useCallback(
+    (path: string) => {
+      if (!pendingFile) return;
+      sessionStorage.setItem("drilldown_pending_file_name", pendingFile.name);
+      sessionStorage.setItem("drilldown_pending_company", pendingFile.company);
+      sessionStorage.setItem("drilldown_pending_file_b64", pendingFile.b64);
+      toast.success("正在跳转...");
+      setTimeout(() => navigate(path), 300);
+    },
+    [pendingFile, navigate]
+  );
 
-  const onDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
-  }, [handleFile]);
+  const onDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragActive(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFile(file);
+    },
+    [handleFile]
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -135,7 +185,10 @@ export default function CompanyAnalysis() {
       {/* Breadcrumb */}
       <div className="container pt-4 pb-2">
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <Link href="/" className="hover:text-foreground transition-colors no-underline">
+          <Link
+            href="/"
+            className="hover:text-foreground transition-colors no-underline"
+          >
             行业查询
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
@@ -145,24 +198,65 @@ export default function CompanyAnalysis() {
 
       {/* Page Header */}
       <section className="container pt-2 pb-6">
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
           <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1">
             企业 ESG 分析
           </h1>
           <p className="text-sm text-muted-foreground">
-            上传 MSCI ESG Ratings Drilldown 报告，进行量化细分分析与 ESG 报告对照
+            上传 MSCI ESG Ratings Drilldown 报告，进行量化细分分析与 ESG
+            报告对照
           </p>
         </motion.div>
       </section>
 
-      <section className="container pb-6">
-        <Link href="/drilldowns" className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 no-underline transition-colors">
-          <FileSpreadsheet className="w-4 h-4" />
-          已上传报告管理（Drilldown 管理）
-          <ChevronRight className="w-4 h-4" />
-        </Link>
+      <section className="container pb-4">
+        <div className="border rounded-xl p-4 text-sm space-y-2">
+          <p>
+            当前支持：房地产管理与开发、半导体与半导体设备（含相关光伏制造企业）。其他行业暂不支持解析对照。
+          </p>
+          <p>
+            Excel 在本地解析；当前静态版本不提供云端保存与报告分享。AI 对照
+            {hasAnalysisApi
+              ? "需服务端管理员验证，结果须人工复核。"
+              : "暂未开放。"}
+          </p>
+          <button className="underline text-xs" onClick={lock}>
+            退出管理员入口
+          </button>
+        </div>
       </section>
-
+      {hasAnalysisApi && (
+        <section className="container pb-4">
+          <form
+            className="border rounded-xl p-4 flex flex-wrap gap-2"
+            onSubmit={e => {
+              e.preventDefault();
+              sessionStorage.setItem("esg-ai-service-token", serviceToken);
+              toast.success("服务端访问凭证已暂存于当前标签页");
+            }}
+          >
+            <label className="text-sm flex-1">
+              AI 服务端访问凭证
+              <input
+                type="password"
+                autoComplete="off"
+                value={serviceToken}
+                onChange={e => setServiceToken(e.target.value)}
+                className="block w-full border rounded-lg p-2 mt-1"
+              />
+            </label>
+            <button className="border rounded-lg px-3 py-2 self-end">
+              设置凭证
+            </button>
+            <p className="w-full text-xs text-muted-foreground">
+              独立服务端凭证用于保护模型接口，界面入口密码不授权模型调用。
+            </p>
+          </form>
+        </section>
+      )}
       {/* Upload Section */}
       <section className="container pb-8">
         <motion.div
@@ -187,7 +281,10 @@ export default function CompanyAnalysis() {
                     未能自动识别行业，请选择对应的分析模块：
                   </p>
                 </div>
-                <button onClick={() => setPendingFile(null)} className="text-amber-500 hover:text-amber-700 shrink-0">
+                <button
+                  onClick={() => setPendingFile(null)}
+                  className="text-amber-500 hover:text-amber-700 shrink-0"
+                >
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -197,7 +294,11 @@ export default function CompanyAnalysis() {
                     key={ind.id}
                     onClick={() => handleIndustrySelect(ind.path)}
                     className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors hover:opacity-90"
-                    style={{ borderColor: ind.border, background: ind.bg, color: ind.color }}
+                    style={{
+                      borderColor: ind.border,
+                      background: ind.bg,
+                      color: ind.color,
+                    }}
                   >
                     {ind.icon}
                     {ind.nameCN}
@@ -209,9 +310,14 @@ export default function CompanyAnalysis() {
 
           <div
             className={`relative rounded-xl border-2 border-dashed p-10 text-center transition-all ${
-              dragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 hover:bg-muted/30"
+              dragActive
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50 hover:bg-muted/30"
             }`}
-            onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+            onDragOver={e => {
+              e.preventDefault();
+              setDragActive(true);
+            }}
             onDragLeave={() => setDragActive(false)}
             onDrop={onDrop}
           >
@@ -220,14 +326,18 @@ export default function CompanyAnalysis() {
               type="file"
               accept=".xlsx,.xls"
               className="hidden"
-              onChange={(e) => { const file = e.target.files?.[0]; if (file) handleFile(file); }}
+              onChange={e => {
+                const file = e.target.files?.[0];
+                if (file) handleFile(file);
+              }}
             />
             <div className="flex flex-col items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-                {isProcessing
-                  ? <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                  : <FileSpreadsheet className="w-8 h-8 text-primary" />
-                }
+                {isProcessing ? (
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                ) : (
+                  <FileSpreadsheet className="w-8 h-8 text-primary" />
+                )}
               </div>
               <div>
                 <h3 className="text-lg font-bold text-foreground">
@@ -237,7 +347,8 @@ export default function CompanyAnalysis() {
                   或点击下方按钮选择文件
                 </p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  支持 .xlsx / .xls 格式 · 数据仅在浏览器本地解析，不会上传至服务器
+                  支持 .xlsx / .xls 格式 ·
+                  数据仅在浏览器本地解析，不会上传至服务器
                 </p>
               </div>
               <button
@@ -254,8 +365,9 @@ export default function CompanyAnalysis() {
           <div className="mt-3 flex items-start gap-2 p-3 rounded-xl bg-muted/40 border border-border">
             <FileSpreadsheet className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              MSCI ESG Ratings Drilldown 报告可从 MSCI ESG Manager 平台导出（.xlsx 格式）。
-              上传后系统将自动识别行业并跳转至对应的量化细分分析页面。
+              MSCI ESG Ratings Drilldown 报告可从 MSCI ESG Manager
+              平台导出（.xlsx 格式）。
+              上传后请选择对应的行业模块；文件名不能作为企业行业分类的依据。
             </p>
           </div>
         </motion.div>
@@ -273,7 +385,7 @@ export default function CompanyAnalysis() {
             ESG 评级量化细分分析 — 已有行业
           </h2>
           <p className="text-xs text-muted-foreground mb-4">
-            点击行业卡片直接进入分析页面，或上传 Drilldown 文件自动跳转
+            点击行业卡片直接进入分析页面，或上传 Drilldown 文件后选择行业
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -287,12 +399,18 @@ export default function CompanyAnalysis() {
                 <Link href={industry.path} className="no-underline block">
                   <div
                     className="rounded-xl border p-5 hover:shadow-md transition-all cursor-pointer group"
-                    style={{ borderColor: industry.border, background: industry.bg }}
+                    style={{
+                      borderColor: industry.border,
+                      background: industry.bg,
+                    }}
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center"
-                        style={{ background: `${industry.color}20`, color: industry.color }}
+                        style={{
+                          background: `${industry.color}20`,
+                          color: industry.color,
+                        }}
                       >
                         {industry.icon}
                       </div>
@@ -302,11 +420,15 @@ export default function CompanyAnalysis() {
                       />
                     </div>
                     <div className="mb-2">
-                      <div className="text-xs text-muted-foreground mb-0.5">{industry.sector}</div>
+                      <div className="text-xs text-muted-foreground mb-0.5">
+                        {industry.sector}
+                      </div>
                       <h3 className="text-sm font-bold text-foreground leading-snug">
                         {industry.nameCN}
                       </h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">{industry.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {industry.name}
+                      </p>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed mb-3">
                       {industry.description}
@@ -316,7 +438,10 @@ export default function CompanyAnalysis() {
                         <span
                           key={p}
                           className="text-xs px-2 py-0.5 rounded-full font-medium"
-                          style={{ background: `${industry.color}15`, color: industry.color }}
+                          style={{
+                            background: `${industry.color}15`,
+                            color: industry.color,
+                          }}
                         >
                           {p}
                         </span>
@@ -337,7 +462,9 @@ export default function CompanyAnalysis() {
                 <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center mb-3">
                   <Users className="w-5 h-5 text-muted-foreground" />
                 </div>
-                <p className="text-sm font-medium text-muted-foreground">更多行业</p>
+                <p className="text-sm font-medium text-muted-foreground">
+                  更多行业
+                </p>
                 <p className="text-xs text-muted-foreground mt-1">即将支持</p>
               </div>
             </motion.div>

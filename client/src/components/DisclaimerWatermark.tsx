@@ -13,8 +13,8 @@ export default function DisclaimerWatermark() {
           -45deg,
           transparent,
           transparent 180px,
-          rgba(180, 180, 180, 0.12) 180px,
-          rgba(180, 180, 180, 0.12) 360px
+          rgba(180, 180, 180, 0.03) 180px,
+          rgba(180, 180, 180, 0.03) 360px
         )`,
       }}
     >
@@ -22,9 +22,9 @@ export default function DisclaimerWatermark() {
       <div
         className="absolute inset-0"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='500' height='220' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50' y='110' font-size='28' font-weight='500' fill='rgba(120,120,120,0.25)' font-family='Arial, sans-serif' transform='rotate(-45 250 110)'%3E免责声明：仅供信息检索和便利学习参考，请勿用于非法用途，否则后果自负！%3C/text%3E%3C/svg%3E")`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: '500px 220px',
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='500' height='220' xmlns='http://www.w3.org/2000/svg'%3E%3Ctext x='50' y='110' font-size='28' font-weight='500' fill='rgba(120,120,120,0.06)' font-family='Arial, sans-serif' transform='rotate(-45 250 110)'%3E独立公益学习参考%3C/text%3E%3C/svg%3E")`,
+          backgroundRepeat: "repeat",
+          backgroundSize: "500px 220px",
         }}
       />
     </div>

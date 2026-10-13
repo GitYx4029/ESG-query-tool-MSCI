@@ -69,13 +69,15 @@ interface RawRow {
 }
 
 function parseNum(val: unknown): number | null {
-  if (val === null || val === undefined || val === "" || val === "-") return null;
+  if (val === null || val === undefined || val === "" || val === "-")
+    return null;
   const n = Number(val);
   return isNaN(n) ? null : n;
 }
 
 function parsePercent(val: unknown): number | null {
-  if (val === null || val === undefined || val === "" || val === "-") return null;
+  if (val === null || val === undefined || val === "" || val === "-")
+    return null;
   const s = String(val).replace("%", "").trim();
   const n = Number(s);
   if (isNaN(n)) return null;
@@ -89,7 +91,10 @@ function parsePercent(val: unknown): number | null {
 export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
   const wb = XLSX.read(file, { type: "array" });
   const ws = wb.Sheets[wb.SheetNames[0]];
-  const rows: unknown[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+  const rows: unknown[][] = XLSX.utils.sheet_to_json(ws, {
+    header: 1,
+    defval: "",
+  });
 
   // 提取日期信息
   const headerRow = rows[0] || [];
@@ -127,10 +132,18 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
 
   // 提取总评级
   const letterGradeRow = null; // handled above
-  const adjScoreRow = rawRows.find(r => r.description === "Industry Adjusted Score");
-  const minScoreRow = rawRows.find(r => r.description === "Industry Minimum Score");
-  const maxScoreRow = rawRows.find(r => r.description === "Industry Maximum Score");
-  const avgScoreRow = rawRows.find(r => r.description === "Weighted Average Key Issue Score");
+  const adjScoreRow = rawRows.find(
+    r => r.description === "Industry Adjusted Score"
+  );
+  const minScoreRow = rawRows.find(
+    r => r.description === "Industry Minimum Score"
+  );
+  const maxScoreRow = rawRows.find(
+    r => r.description === "Industry Maximum Score"
+  );
+  const avgScoreRow = rawRows.find(
+    r => r.description === "Weighted Average Key Issue Score"
+  );
 
   // 解析支柱和关键议题
   const pillars: PillarData[] = [];
@@ -167,12 +180,20 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
     }
 
     // 跳过总评级行（不属于任何支柱）
-    if (desc === "Weighted Average Key Issue Score" || desc === "Industry Adjusted Score" || desc === "Industry Minimum Score" || desc === "Industry Maximum Score") {
+    if (
+      desc === "Weighted Average Key Issue Score" ||
+      desc === "Industry Adjusted Score" ||
+      desc === "Industry Minimum Score" ||
+      desc === "Industry Maximum Score"
+    ) {
       continue;
     }
 
     // 关键议题行
-    if (desc.includes("Key Issue Score") || desc === "Corporate Behavior Score") {
+    if (
+      desc.includes("Key Issue Score") ||
+      desc === "Corporate Behavior Score"
+    ) {
       if (currentKeyIssue && currentPillar) {
         currentPillar.keyIssues.push(currentKeyIssue);
       }
@@ -193,29 +214,37 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
 
     // 子维度
     if (desc === "Exposure Score") {
-      currentKeyIssue.exposureScore = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.exposureScore =
+        row.lastScore ?? row.priorScore ?? undefined;
       collectingPractices = false;
       collectingPerformance = false;
     } else if (desc === "Business Segment Exposure Score") {
-      currentKeyIssue.businessSegmentExposure = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.businessSegmentExposure =
+        row.lastScore ?? row.priorScore ?? undefined;
     } else if (desc === "Geographic Exposure Score") {
-      currentKeyIssue.geographicExposure = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.geographicExposure =
+        row.lastScore ?? row.priorScore ?? undefined;
     } else if (desc === "Management Score") {
-      currentKeyIssue.managementScore = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.managementScore =
+        row.lastScore ?? row.priorScore ?? undefined;
       collectingPractices = false;
       collectingPerformance = false;
     } else if (desc === "Management Score - Excluding Controversies") {
-      currentKeyIssue.managementExclControversies = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.managementExclControversies =
+        row.lastScore ?? row.priorScore ?? undefined;
     } else if (desc === "Practices Score") {
-      currentKeyIssue.practicesScore = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.practicesScore =
+        row.lastScore ?? row.priorScore ?? undefined;
       collectingPractices = true;
       collectingPerformance = false;
     } else if (desc === "Performance Score") {
-      currentKeyIssue.performanceScore = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.performanceScore =
+        row.lastScore ?? row.priorScore ?? undefined;
       collectingPractices = false;
       collectingPerformance = true;
     } else if (desc === "Controversy Deduction") {
-      currentKeyIssue.controversyDeduction = row.lastScore ?? row.priorScore ?? undefined;
+      currentKeyIssue.controversyDeduction =
+        row.lastScore ?? row.priorScore ?? undefined;
       collectingPractices = false;
       collectingPerformance = false;
     } else if (collectingPractices && row.lastWeight !== null) {
@@ -230,9 +259,15 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
         score: row.lastScore ?? row.priorScore ?? 0,
         weight: row.lastWeight ?? 0,
       });
-    } else if (currentPillar?.name === "Governance" && !desc.includes("Score")) {
+    } else if (
+      currentPillar?.name === "Governance" &&
+      !desc.includes("Score")
+    ) {
       // 治理子项（Board, Pay, Ownership & Control, Accounting, Business Ethics, Tax Transparency）
-      if (currentKeyIssue.name === "Corporate Governance" || currentKeyIssue.name === "Corporate Behavior") {
+      if (
+        currentKeyIssue.name === "Corporate Governance" ||
+        currentKeyIssue.name === "Corporate Behavior"
+      ) {
         currentKeyIssue.practices.push({
           name: desc,
           score: row.lastScore ?? row.priorScore ?? 0,
@@ -247,6 +282,9 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
     currentPillar.keyIssues.push(currentKeyIssue);
   }
   if (currentPillar) pillars.push(currentPillar);
+
+  if (!adjScoreRow || !pillars.length || !pillars.some(p => p.keyIssues.length))
+    throw new Error("未识别到有效的 MSCI Drilldown 数据结构");
 
   // 提取公司名 - 从文件名或默认
   const companyName = "上传企业";
@@ -264,25 +302,6 @@ export function parseEsgDrilldown(file: ArrayBuffer): EsgDrilldownData {
     weightedAvgKeyIssueScore: avgScoreRow?.lastScore ?? 0,
     pillars,
     rawRows,
-  };
-}
-
-/**
- * Applies the requested presentation values only to the two built-in demo reports.
- * Uploaded third-party reports continue to display their parsed scores unchanged.
- */
-export function applyDemoScoreProfile(data: EsgDrilldownData, profile: DemoScoreProfile): EsgDrilldownData {
-  const targetScores = profile === "realEstate"
-    ? { industryAdjustedScore: 5.7, Environmental: 6.6, Social: 6.8 }
-    : { industryAdjustedScore: 6.1, Environmental: 6.4, Social: 6.2 };
-
-  return {
-    ...data,
-    industryAdjustedScore: targetScores.industryAdjustedScore,
-    pillars: data.pillars.map((pillar) => {
-      const score = targetScores[pillar.name as keyof typeof targetScores];
-      return typeof score === "number" ? { ...pillar, score } : pillar;
-    }),
   };
 }
 

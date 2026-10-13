@@ -1,3 +1,15 @@
+# 2026-10-13 公益版更新
+
+当前公开页面为行业查询与方法学学习；企业分析及其直接网址需要通过管理员界面密码。真实AI调用、私有需求记录均需独立服务端凭证，不能用界面门槛代替。
+
+- 示例为纯虚构数据，不下载真实企業Drilldown。用户上传不得按文件名改分或改企业名。
+- 公共页面不展示估算权重百分比。
+- 方法学来源状态以 `client/src/lib/methodologyRegistry.ts` 为准：已核验文件标题、封面日期，非全部正文审阅。原材料采购PDF文件名采用 `raw-materials-sourcing`。
+- 反馈与匿名统计接入、部署变量、私有存储与验收详见 `docs/PUBLIC_PROJECT_SETUP.md`。
+- 以下历史启动说明保留供理解旧版本；与以上说明冲突时以以上更新及当前代码为准。
+
+---
+
 # 跨对话/平台无缝继续开发 — 固定启动指令
 
 > 每次在新的 Manus 对话或其他 AI 平台（如 Claude、GPT）中继续开发本项目时，
@@ -35,33 +47,35 @@
 ## 关键文件结构
 
 ```
+
 client/src/
-  pages/
-    Home.tsx                ← 首页（行业搜索 + 导航）
-    IndustryDetail.tsx      ← 行业详情页（关键议题展示）
-    CompanyAnalysis.tsx     ← 企业ESG分析入口（上传+行业卡片）
-    RealEstateDrilldown.tsx ← 房地产行业Drilldown分析页
-    SolarDrilldown.tsx      ← 半导体/太阳能行业Drilldown分析页
-    MaterialityMap.tsx      ← MSCI重要性议题地图
-    DrilldownList.tsx       ← Drilldown管理列表
-    DrilldownDetail.tsx     ← Drilldown详情页
-  lib/
-    parseEsgExcel.ts        ← MSCI Drilldown Excel解析器
-    realEstateMethodology.ts ← 房地产方法学数据
-    solarMethodology.ts     ← 半导体/太阳能方法学数据
-    esgData.ts              ← 行业/议题基础数据
-  components/
-    Header.tsx              ← 顶部导航栏
-    DisclaimerWatermark.tsx ← 免责声明水印（透明度0.25，字体28px）
-  App.tsx                   ← 路由配置
+pages/
+Home.tsx ← 首页（行业搜索 + 导航）
+IndustryDetail.tsx ← 行业详情页（关键议题展示）
+CompanyAnalysis.tsx ← 企业ESG分析入口（上传+行业卡片）
+RealEstateDrilldown.tsx ← 房地产行业Drilldown分析页
+SolarDrilldown.tsx ← 半导体/太阳能行业Drilldown分析页
+MaterialityMap.tsx ← MSCI重要性议题地图
+DrilldownList.tsx ← Drilldown管理列表
+DrilldownDetail.tsx ← Drilldown详情页
+lib/
+parseEsgExcel.ts ← MSCI Drilldown Excel解析器
+realEstateMethodology.ts ← 房地产方法学数据
+solarMethodology.ts ← 半导体/太阳能方法学数据
+esgData.ts ← 行业/议题基础数据
+components/
+Header.tsx ← 顶部导航栏
+DisclaimerWatermark.tsx ← 免责声明水印（透明度0.25，字体28px）
+App.tsx ← 路由配置
 server/
-  routers.ts                ← tRPC procedures（含esgAnalysis.analyzeDisclosure）
-  db.ts                     ← 数据库查询助手
+routers.ts ← tRPC procedures（含esgAnalysis.analyzeDisclosure）
+db.ts ← 数据库查询助手
 drizzle/
-  schema.ts                 ← 数据库表结构
+schema.ts ← 数据库表结构
 docs/
-  ADD_NEW_INDUSTRY.md       ← 新增行业Drilldown的SOP文档（8处修改）
-  CONTINUE_DEV_PROMPT.md    ← 本文件
+ADD_NEW_INDUSTRY.md ← 新增行业Drilldown的SOP文档（8处修改）
+CONTINUE_DEV_PROMPT.md ← 本文件
+
 ```
 
 ## 设计规范
@@ -99,6 +113,7 @@ docs/
 ### 何时使用
 
 每次在以下情况下开始新对话时，将上述指令粘贴给 AI：
+
 - 在 Manus 中开启新对话继续开发
 - 在 Claude、GPT、Gemini 等其他平台中开发
 - 长时间中断后重新开发（超过 1 周）
@@ -107,16 +122,17 @@ docs/
 
 当项目有重大变更时（如新增行业、重构功能、修改设计规范），需要同步更新本文件中的启动指令：
 
-| 变更类型 | 需要更新的字段 |
-|---------|-------------|
-| 新增 Drilldown 行业 | "已支持的 Drilldown 行业"表格 |
-| 新增页面/功能 | "关键文件结构"和"项目功能概述" |
-| 修改设计规范 | "设计规范"部分 |
-| 修改标准流程 | "新增行业 Drilldown 的标准流程"和 ADD_NEW_INDUSTRY.md |
+| 变更类型            | 需要更新的字段                                        |
+| ------------------- | ----------------------------------------------------- |
+| 新增 Drilldown 行业 | "已支持的 Drilldown 行业"表格                         |
+| 新增页面/功能       | "关键文件结构"和"项目功能概述"                        |
+| 修改设计规范        | "设计规范"部分                                        |
+| 修改标准流程        | "新增行业 Drilldown 的标准流程"和 ADD_NEW_INDUSTRY.md |
 
 ### 在 Manus 中的特殊说明
 
 在 Manus 中开启新对话时，除了粘贴启动指令外，还可以：
+
 - 直接提供项目 URL（`https://esgquerytool-iu5gurrs.manus.space`），Manus 可以访问并了解当前状态
 - 提供最新的 checkpoint 版本号，Manus 可以直接在该版本基础上继续开发
 - 如果需要上传文件（如新行业的 Drilldown Excel），直接在对话中附件上传即可
@@ -124,6 +140,7 @@ docs/
 ### 是否需要 Skill？
 
 **不需要单独创建 Skill**。本项目的所有关键信息已经记录在以下两个文档中，直接粘贴启动指令即可传递完整上下文：
+
 - `docs/CONTINUE_DEV_PROMPT.md`（本文件，跨对话启动指令）
 - `docs/ADD_NEW_INDUSTRY.md`（新增行业 SOP）
 
@@ -135,11 +152,11 @@ Skill 适合封装**通用的、可复用的工作流**（如"分析任意公司
 
 以下是开发过程中的重要设计决策，供后续开发参考：
 
-| 决策 | 选择 | 原因 |
-|------|------|------|
-| Drilldown 文件解析位置 | 浏览器本地解析（不上传服务器） | 保护用户数据隐私，MSCI 数据敏感 |
-| 方法学数据存储方式 | 硬编码在 TypeScript 文件中 | 方法学内容相对稳定，避免数据库复杂性；便于版本控制 |
-| LLM 对照分析调用方式 | 服务端 tRPC procedure（`esgAnalysis.analyzeDisclosure`） | 避免暴露 API Key；支持流式响应 |
-| 同行企业搜索方式 | 前端直接搜索企业官网（getDomainHint） | 轻量实现，无需维护企业数据库 |
-| 新行业扩展策略 | 开发者驱动（提供文件 → 开发者创建页面） | 保证方法学准确性；当前行业数量少（<10个） |
-| 水印实现方式 | Canvas 绘制 + CSS fixed 定位 | 覆盖所有页面；不影响页面交互 |
+| 决策                   | 选择                                                     | 原因                                               |
+| ---------------------- | -------------------------------------------------------- | -------------------------------------------------- |
+| Drilldown 文件解析位置 | 浏览器本地解析（不上传服务器）                           | 保护用户数据隐私，MSCI 数据敏感                    |
+| 方法学数据存储方式     | 硬编码在 TypeScript 文件中                               | 方法学内容相对稳定，避免数据库复杂性；便于版本控制 |
+| LLM 对照分析调用方式   | 服务端 tRPC procedure（`esgAnalysis.analyzeDisclosure`） | 避免暴露 API Key；支持流式响应                     |
+| 同行企业搜索方式       | 前端直接搜索企业官网（getDomainHint）                    | 轻量实现，无需维护企业数据库                       |
+| 新行业扩展策略         | 开发者驱动（提供文件 → 开发者创建页面）                  | 保证方法学准确性；当前行业数量少（<10个）          |
+| 水印实现方式           | Canvas 绘制 + CSS fixed 定位                             | 覆盖所有页面；不影响页面交互                       |

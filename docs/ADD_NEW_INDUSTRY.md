@@ -1,3 +1,5 @@
+> 2026-10-13 更新：当前公益版的企业分析经管理员入口开放。用户上传始终保留原数值，不按文件名覆盖分数或企业名；上传后由用户明确选择行业，文件名不作为 GICS 分类依据。当前示例为 `demoData.ts` 中的纯虚构数据，不再使用外部企业报告作为示例。以下涉及文件名自动识别、复制真实示例链接的旧步骤不再适用。
+
 # 新增行业 Drilldown 分析模块 — 标准工作流
 
 > 本文档描述如何为 ESG 查询工具新增一个行业的 MSCI ESG Ratings Drilldown 量化细分分析页面。
@@ -9,12 +11,12 @@
 
 在开始之前，需要准备以下材料：
 
-| 材料 | 说明 | 获取方式 |
-|------|------|---------|
-| MSCI ESG Ratings Drilldown Excel 文件 | 目标企业的 `.xlsx` 格式报告 | 从 MSCI ESG Manager 平台导出 |
-| 企业全称（中文）+ 上市代码 | 如"招商局蛇口工业区控股股份有限公司 001979.SZ" | 公开信息 |
-| MSCI 行业分类名称（英文） | 如"Semiconductors & Semiconductor Equipment" | 从 Drilldown 文件中提取 |
-| MSCI 方法学文档（可选但推荐） | 各关键议题的评分标准说明 | MSCI 官网 ESG 方法学文档页 |
+| 材料                                  | 说明                                           | 获取方式                     |
+| ------------------------------------- | ---------------------------------------------- | ---------------------------- |
+| MSCI ESG Ratings Drilldown Excel 文件 | 目标企业的 `.xlsx` 格式报告                    | 从 MSCI ESG Manager 平台导出 |
+| 企业全称（中文）+ 上市代码            | 如"招商局蛇口工业区控股股份有限公司 001979.SZ" | 公开信息                     |
+| MSCI 行业分类名称（英文）             | 如"Semiconductors & Semiconductor Equipment"   | 从 Drilldown 文件中提取      |
+| MSCI 方法学文档（可选但推荐）         | 各关键议题的评分标准说明                       | MSCI 官网 ESG 方法学文档页   |
 
 ---
 
@@ -35,6 +37,7 @@ for row in ws.iter_rows(values_only=True):
 ```
 
 需要提取的字段：
+
 - **关键议题名称**（Key Issue Name，英文）
 - **关键议题权重**（Key Issue Weight，%）
 - **所属支柱**（Environmental / Social / Governance）
@@ -48,6 +51,7 @@ for row in ws.iter_rows(values_only=True):
 **文件路径：** `client/src/lib/{industryId}Methodology.ts`
 
 参照现有文件结构：
+
 - `client/src/lib/realEstateMethodology.ts`（房地产）
 - `client/src/lib/solarMethodology.ts`（半导体/太阳能）
 
@@ -101,16 +105,16 @@ cp client/src/pages/SolarDrilldown.tsx client/src/pages/{IndustryId}Drilldown.ts
 
 需要修改的位置（共 8 处）：
 
-| # | 位置 | 修改内容 | 示例 |
-|---|------|---------|------|
-| 1 | 文件头注释 | 更新行业名称和适用企业 | `* BankDrilldown - 多元化银行行业` |
-| 2 | 方法学导入 | 改为新行业的方法学文件 | `from "@/lib/bankMethodology"` |
-| 3 | 函数名 | 改为新行业的组件名 | `export default function BankDrilldown()` |
-| 4 | 行业标题显示 | 更新行业中英文名称 | `多元化银行 (Diversified Banks)` |
-| 5 | 企业名称映射 | 更新企业全称和上市代码 | `"晶澳太阳能科技股份有限公司 002459.SZ"` |
-| 6 | **同行企业预设列表** | 更新快速添加按钮的企业名称列表（8个）和 `getDomainHint` 域名映射表 | 见下方说明 |
-| 7 | 示例文件链接 | 上传示例文件到CDN并更新URL | `manus-upload-file --webdev file.xlsx` |
-| 8 | 提示文字 | 更新行业说明文字 | `本模块当前针对多元化银行行业设计` |
+| #   | 位置                 | 修改内容                                                           | 示例                                      |
+| --- | -------------------- | ------------------------------------------------------------------ | ----------------------------------------- |
+| 1   | 文件头注释           | 更新行业名称和适用企业                                             | `* BankDrilldown - 多元化银行行业`        |
+| 2   | 方法学导入           | 改为新行业的方法学文件                                             | `from "@/lib/bankMethodology"`            |
+| 3   | 函数名               | 改为新行业的组件名                                                 | `export default function BankDrilldown()` |
+| 4   | 行业标题显示         | 更新行业中英文名称                                                 | `多元化银行 (Diversified Banks)`          |
+| 5   | 企业名称映射         | 更新企业全称和上市代码                                             | `"晶澳太阳能科技股份有限公司 002459.SZ"`  |
+| 6   | **同行企业预设列表** | 更新快速添加按钮的企业名称列表（8个）和 `getDomainHint` 域名映射表 | 见下方说明                                |
+| 7   | 示例文件链接         | 上传示例文件到CDN并更新URL                                         | `manus-upload-file --webdev file.xlsx`    |
+| 8   | 提示文字             | 更新行业说明文字                                                   | `本模块当前针对多元化银行行业设计`        |
 
 **第6处修改详解 — 同行企业预设列表**
 
@@ -130,13 +134,13 @@ cp client/src/pages/SolarDrilldown.tsx client/src/pages/{IndustryId}Drilldown.ts
 
 **各行业同行企业参考：**
 
-| 行业 | 建议同行企业（8个） |
-|------|-------------------|
-| 房地产管理与开发 | 万科、中海地产、龙湖集团、华润置地、新鸿基地产、恒隆地产、太古地产、嘉里建设 |
-| 半导体/太阳能 | 隆基绿能、天合光能、晶科能源、协鑫科技、阿特斯、通威股份、东方日升、正泰新能 |
-| 多元化银行 | 工商银行、建设银行、中国银行、农业银行、招商银行、兴业银行、平安银行、浦发银行 |
-| 能源（石油天然气） | 中国石油、中国石化、中海油、中国神华、陕西煤业、兖矿能源、淮北矿业、中煤能源 |
-| 医疗保健 | 恒瑞医药、迈瑞医疗、药明康德、百济神州、联影医疗、华大基因、爱尔眼科、通策医疗 |
+| 行业               | 建议同行企业（8个）                                                            |
+| ------------------ | ------------------------------------------------------------------------------ |
+| 房地产管理与开发   | 万科、中海地产、龙湖集团、华润置地、新鸿基地产、恒隆地产、太古地产、嘉里建设   |
+| 半导体/太阳能      | 隆基绿能、天合光能、晶科能源、协鑫科技、阿特斯、通威股份、东方日升、正泰新能   |
+| 多元化银行         | 工商银行、建设银行、中国银行、农业银行、招商银行、兴业银行、平安银行、浦发银行 |
+| 能源（石油天然气） | 中国石油、中国石化、中海油、中国神华、陕西煤业、兖矿能源、淮北矿业、中煤能源   |
+| 医疗保健           | 恒瑞医药、迈瑞医疗、药明康德、百济神州、联影医疗、华大基因、爱尔眼科、通策医疗 |
 
 ---
 
@@ -180,6 +184,7 @@ import {IndustryId}Drilldown from "./pages/{IndustryId}Drilldown";
 ```
 
 **颜色建议：**
+
 - 房地产：蓝色 `#2563eb`
 - 半导体/太阳能：绿色 `#16a34a`
 - 银行：紫色 `#7c3aed`
@@ -217,10 +222,10 @@ manus-upload-file --webdev path/to/sample_drilldown.xlsx
 
 ## 九、已支持行业一览
 
-| 行业 | MSCI 分类 | 路由 | 示例企业 | 方法学文件 |
-|------|---------|------|---------|-----------|
-| 房地产管理与开发 | Real Estate Management & Development | `/drilldown/real-estate` | 招商局蛇口 001979.SZ | `realEstateMethodology.ts` |
-| 半导体与半导体设备 | Semiconductors & Semiconductor Equipment | `/drilldown/solar` | 晶澳科技 002459.SZ | `solarMethodology.ts` |
+| 行业               | MSCI 分类                                | 路由                     | 示例企业             | 方法学文件                 |
+| ------------------ | ---------------------------------------- | ------------------------ | -------------------- | -------------------------- |
+| 房地产管理与开发   | Real Estate Management & Development     | `/drilldown/real-estate` | 招商局蛇口 001979.SZ | `realEstateMethodology.ts` |
+| 半导体与半导体设备 | Semiconductors & Semiconductor Equipment | `/drilldown/solar`       | 晶澳科技 002459.SZ   | `solarMethodology.ts`      |
 
 ---
 
@@ -229,6 +234,7 @@ manus-upload-file --webdev path/to/sample_drilldown.xlsx
 如果需要在**其他 Manus 对话或 AI 平台**中继续开发本项目，请提供以下信息：
 
 ### 项目技术栈
+
 - **前端：** React 19 + TypeScript + Tailwind CSS 4 + Vite
 - **后端：** Express + tRPC 11
 - **数据库：** MySQL (Drizzle ORM)
@@ -236,6 +242,7 @@ manus-upload-file --webdev path/to/sample_drilldown.xlsx
 - **路由：** wouter
 
 ### 关键文件结构
+
 ```
 client/src/
   pages/
@@ -252,11 +259,13 @@ server/
 ```
 
 ### 新增行业的核心逻辑
+
 1. 创建 `{id}Methodology.ts` → 复制 `SolarDrilldown.tsx` 并修改 5 处 → 注册路由 → 更新 `CompanyAnalysis.tsx` 的 `SUPPORTED_INDUSTRIES`
 2. 方法学数据结构：每个议题含 `overview`、`assessmentFramework`、`managementIndicators`、`performanceIndicators`
 3. LLM 分析通过 `trpc.esgAnalysis.analyzeDisclosure` 调用，需要传入 `issueName`、`companyName`、`reportBase64`、`indicators`、`methodologyOverview`
 
 ### 设计规范
+
 - ESG 三色体系：环境绿 `#16a34a`、社会橙 `#d97706`、治理蓝 `#2563eb`
 - 主题：浅色模式（`defaultTheme="light"`）
 - 字体：系统字体（`var(--font-sans)`）
