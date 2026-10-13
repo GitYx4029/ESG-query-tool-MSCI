@@ -20,9 +20,7 @@ import {
   Cpu,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { getServiceToken } from "@/lib/adminSession";
 import { useAnalysisGate } from "@/components/AnalysisGate";
-import { hasAnalysisApi } from "@/lib/apiConfig";
 import { trackEvent } from "@/lib/community";
 import Header from "@/components/Header";
 import { toast } from "sonner";
@@ -91,7 +89,6 @@ function detectIndustryPath(fileName: string): string | null {
 export default function CompanyAnalysis() {
   const [, navigate] = useLocation();
   const { lock } = useAnalysisGate();
-  const [serviceToken, setServiceToken] = useState(getServiceToken);
   const [dragActive, setDragActive] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingFile, setPendingFile] = useState<{
@@ -206,8 +203,7 @@ export default function CompanyAnalysis() {
             企业 ESG 分析
           </h1>
           <p className="text-sm text-muted-foreground">
-            上传 MSCI ESG Ratings Drilldown 报告，进行量化细分分析与 ESG
-            报告对照
+            上传 MSCI ESG Ratings Drilldown 评分文件，进行量化细分分析
           </p>
         </motion.div>
       </section>
@@ -215,48 +211,14 @@ export default function CompanyAnalysis() {
       <section className="container pb-4">
         <div className="border rounded-xl p-4 text-sm space-y-2">
           <p>
-            当前支持：房地产管理与开发、半导体与半导体设备（含相关光伏制造企业）。其他行业暂不支持解析对照。
+            当前支持：房地产管理与开发、半导体与半导体设备（含相关光伏制造企业）。其他行业暂不支持评分文件解析。
           </p>
-          <p>
-            Excel 在本地解析；当前静态版本不提供云端保存与报告分享。AI 对照
-            {hasAnalysisApi
-              ? "需服务端管理员验证，结果须人工复核。"
-              : "暂未开放。"}
-          </p>
+          <p>Excel 在本地解析；当前静态版本不提供云端保存与报告分享。</p>
           <button className="underline text-xs" onClick={lock}>
             退出管理员入口
           </button>
         </div>
       </section>
-      {hasAnalysisApi && (
-        <section className="container pb-4">
-          <form
-            className="border rounded-xl p-4 flex flex-wrap gap-2"
-            onSubmit={e => {
-              e.preventDefault();
-              sessionStorage.setItem("esg-ai-service-token", serviceToken);
-              toast.success("服务端访问凭证已暂存于当前标签页");
-            }}
-          >
-            <label className="text-sm flex-1">
-              AI 服务端访问凭证
-              <input
-                type="password"
-                autoComplete="off"
-                value={serviceToken}
-                onChange={e => setServiceToken(e.target.value)}
-                className="block w-full border rounded-lg p-2 mt-1"
-              />
-            </label>
-            <button className="border rounded-lg px-3 py-2 self-end">
-              设置凭证
-            </button>
-            <p className="w-full text-xs text-muted-foreground">
-              独立服务端凭证用于保护模型接口，界面入口密码不授权模型调用。
-            </p>
-          </form>
-        </section>
-      )}
       {/* Upload Section */}
       <section className="container pb-8">
         <motion.div

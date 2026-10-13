@@ -1,5 +1,5 @@
 import { z } from "zod";
-export const APP_VERSION = "1.9.0";
+export const APP_VERSION = "1.10.0";
 export const eventSchema = z
   .object({
     event: z.enum([
@@ -14,13 +14,13 @@ export const eventSchema = z
       "feedback_submitted",
     ]),
     session: z.string().regex(/^[a-zA-Z0-9-]{8,80}$/),
-    version: z.literal(APP_VERSION),
+    version: z.enum(["1.9.0", APP_VERSION]),
     source: z.enum(["xiaohongshu", "direct", "other"]),
     note: z
       .string()
       .regex(/^[a-zA-Z0-9_-]{0,40}$/)
       .default(""),
-    page: z.enum(["home", "industry", "materiality-map", "analysis", "other"]),
+    page: z.enum(["home", "industry", "materiality-map", "analysis", "report-analysis", "other"]),
     industry: z.string().max(100).optional(),
     issue: z.string().max(100).optional(),
     resultCount: z.number().int().min(0).max(200).optional(),
@@ -45,9 +45,9 @@ export const feedbackSchema = z
     message: z.string().trim().max(1000).default(""),
     contact: z.string().trim().max(120).default(""),
     consentToContact: z.boolean().default(false),
-    page: z.enum(["home", "industry", "materiality-map", "analysis", "other"]),
+    page: z.enum(["home", "industry", "materiality-map", "analysis", "report-analysis", "other"]),
     industry: z.string().max(100).default(""),
-    version: z.literal(APP_VERSION),
+    version: z.enum(["1.9.0", APP_VERSION]),
   })
   .strict()
   .refine(data => !data.contact || data.consentToContact, {

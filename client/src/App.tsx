@@ -17,6 +17,7 @@ import Home from "./pages/Home";
 import IndustryDetail from "./pages/IndustryDetail";
 const AdminInsights = lazy(() => import("./pages/AdminInsights"));
 const CompanyAnalysis = lazy(() => import("./pages/CompanyAnalysis"));
+const ReportAnalysis = lazy(() => import("./pages/ReportAnalysis"));
 import MaterialityMap from "./pages/MaterialityMap";
 const RealEstateDrilldown = lazy(() => import("./pages/RealEstateDrilldown"));
 const SolarDrilldown = lazy(() => import("./pages/SolarDrilldown"));
@@ -27,6 +28,11 @@ function AppRoutes() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/report-analysis">
+        <Suspense fallback={<div className="container py-12">加载报告分析工具…</div>}>
+          <ReportAnalysis />
+        </Suspense>
+      </Route>
       <Route path="/industry/:name" component={IndustryDetail} />
       <Route path="/company">
         <ProtectedAnalysis>

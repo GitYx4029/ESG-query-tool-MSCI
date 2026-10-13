@@ -28,6 +28,7 @@ jobs:
         run: npm install --legacy-peer-deps
       - run: npm run check
       - run: npm test
+      - run: node scripts/prepare-report-assets.mjs
       - run: npx vite build
         env:
           VITE_AI_API_ORIGIN: ${{ vars.VITE_AI_API_ORIGIN }}

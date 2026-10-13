@@ -15,6 +15,7 @@ import {
   Building2,
   ArrowRight,
   ExternalLink,
+  FileText,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import FeedbackPrompt from "@/components/FeedbackPrompt";
@@ -92,7 +93,7 @@ export default function Home() {
               className="mt-4 text-base md:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              免费公益学习工具：查行业议题，读方法学原文。无需注册。
+              免费公益学习工具：分析报告披露，查行业议题，读方法学原文。无需注册。
             </p>
           </motion.div>
 
@@ -147,7 +148,26 @@ export default function Home() {
 
       {/* Primary entry points */}
       <section className="container -mt-2 pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Link
+            href="/report-analysis"
+            className="group rounded-2xl border-2 border-blue-300 bg-blue-50/50 p-5 no-underline shadow-sm hover:shadow-md transition-all"
+          >
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <div className="text-xs font-semibold text-blue-800">
+                  01 · 报告分析
+                </div>
+                <h2 className="mt-1 text-xl font-bold text-foreground">
+                  ESG 报告对照
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  上传PDF或图片，识别行业与披露证据
+                </p>
+              </div>
+              <FileText className="w-7 h-7 shrink-0 text-blue-700" />
+            </div>
+          </Link>
           <Link
             href="/industry/Automobiles"
             className="group rounded-2xl border-2 border-esg-env/30 bg-esg-env-bg/30 p-5 no-underline shadow-sm hover:shadow-md hover:border-esg-env/60 transition-all"
@@ -155,7 +175,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-semibold text-esg-env uppercase tracking-wide">
-                  01 · 快速体验
+                  02 · 快速体验
                 </div>
                 <h2 className="mt-1 text-xl font-bold text-foreground">
                   试查汽车行业
@@ -174,7 +194,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-semibold text-esg-gov uppercase tracking-wide">
-                  02 · 核心入口
+                  03 · 议题地图
                 </div>
                 <h2 className="mt-1 text-xl font-bold text-foreground">
                   重要性议题地图
@@ -193,7 +213,7 @@ export default function Home() {
             <div className="flex items-center justify-between">
               <div>
                 <div className="text-xs font-semibold text-esg-social uppercase tracking-wide">
-                  03 · 管理员入口
+                  04 · 管理员入口
                 </div>
                 <h2 className="mt-1 text-xl font-bold text-foreground">
                   企业分析

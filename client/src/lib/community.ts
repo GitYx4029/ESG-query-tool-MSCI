@@ -21,6 +21,7 @@ export function pageCategory(): CommunityEvent["page"] {
     ""
   );
   if (path.startsWith("/industry/")) return "industry";
+  if (path === "/report-analysis") return "report-analysis";
   if (path === "/materiality-map") return "materiality-map";
   if (path.startsWith("/company") || path.startsWith("/drilldown"))
     return "analysis";

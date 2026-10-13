@@ -56,15 +56,10 @@ import {
   type IssueMethodology,
   type MethodologyTooltip,
 } from "@/lib/solarMethodology";
-import { trpc } from "@/lib/trpc";
-import { hasAnalysisApi } from "@/lib/apiConfig";
 import { trackEvent } from "@/lib/community";
 import { issueNamesCN } from "@/lib/esgData";
 import { createDemoData } from "@/lib/demoData";
-import { fileToBase64 } from "@/lib/fileToBase64";
 import { toast } from "sonner";
-import { Streamdown } from "streamdown";
-import * as XLSX from "xlsx";
 
 // 支柱配色
 const pillarConfig: Record<
@@ -109,21 +104,6 @@ interface PeerCompany {
   searching?: boolean;
 }
 
-// 对照分析结果
-interface DisclosureAnalysis {
-  indicatorName: string;
-  status: "met" | "partial" | "not_met" | "not_found" | "insufficient_basis";
-  summary: string;
-  source: string;
-  details: string;
-}
-
-interface IssueAnalysisResult {
-  issueName: string;
-  analyses: DisclosureAnalysis[];
-  overallAssessment: string;
-}
-
 export default function SolarDrilldown() {
   const [data, setData] = useState<EsgDrilldownData | null>(null);
   const [fileName, setFileName] = useState<string>("");
@@ -134,18 +114,6 @@ export default function SolarDrilldown() {
   // 同行参考
   const [peers, setPeers] = useState<PeerCompany[]>([]);
   const [peerInput, setPeerInput] = useState("");
-
-  // ESG报告上传与分析
-  const [reportFile, setReportFile] = useState<File | null>(null);
-  const [reportFileName, setReportFileName] = useState("");
-  const [analysisResults, setAnalysisResults] = useState<
-    Map<string, IssueAnalysisResult>
-  >(new Map());
-  const [analyzingIssue, setAnalyzingIssue] = useState<string | null>(null);
-  const reportInputRef = useRef<HTMLInputElement>(null);
-
-  // LLM分析mutation
-  const analyzeDisclosure = trpc.esgAnalysis.analyzeDisclosure.useMutation();
 
   // 从企业分析页跳转过来时，自动读取sessionStorage中的文件并解析
   useEffect(() => {
@@ -217,235 +185,6 @@ export default function SolarDrilldown() {
       return next;
     });
   };
-
-  // 处理ESG报告上传
-  const handleReportUpload = useCallback((file: File) => {
-    if (!/\.pdf$/i.test(file.name)) {
-      toast.error("请上传 PDF 格式的 ESG 报告");
-      return;
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      toast.error("报告不能超过 20 MB");
-      return;
-    }
-    setReportFile(file);
-    setReportFileName(file.name);
-    setAnalysisResults(new Map());
-    toast.success(`已加载报告: ${file.name}`);
-  }, []);
-
-  // 对照分析某个议题
-  const analyzeIssue = useCallback(
-    async (issue: KeyIssueData) => {
-      if (!reportFile || !data) return;
-      if (!hasAnalysisApi) {
-        trackEvent("analysis_result", { status: "unconfigured" });
-        toast.error("尚未配置 AI 分析服务，请联系网站管理员。");
-        return;
-      }
-      setAnalyzingIssue(issue.name);
-
-      try {
-        // 将报告文件转为base64
-        const base64 = await fileToBase64(reportFile);
-
-        const methodology = findIssueMethodology(issue.name);
-        const indicators = [
-          ...issue.practices.map(p => ({
-            name: p.name,
-            score: p.score,
-            weight: p.weight,
-            type: "management" as const,
-          })),
-          ...issue.performances.map(p => ({
-            name: p.name,
-            score: p.score,
-            weight: p.weight,
-            type: "performance" as const,
-          })),
-        ];
-
-        const result = await analyzeDisclosure.mutateAsync({
-          issueName: issue.name,
-          companyName: data.companyName || "未知企业",
-          reportBase64: base64,
-          reportFileName: reportFileName,
-          indicators: indicators.map(ind => ({
-            name: ind.name,
-            score: ind.score,
-            type: ind.type,
-            methodologyHint: methodology
-              ? findMethodologyTooltip(issue.name, ind.name)?.scoringCriteria ||
-                ""
-              : "",
-          })),
-          methodologyOverview: methodology?.assessmentFramework || "",
-        });
-
-        setAnalysisResults(prev => {
-          const next = new Map(prev);
-          next.set(issue.name, result);
-          return next;
-        });
-        trackEvent("analysis_result", { status: "success" });
-        toast.success(`${issue.name} 对照分析完成`);
-      } catch (e) {
-        console.error(e);
-        trackEvent("analysis_result", { status: "failure" });
-        toast.error(e instanceof Error ? e.message : "分析失败，请稍后重试");
-      } finally {
-        setAnalyzingIssue(null);
-      }
-    },
-    [reportFile, data, reportFileName, analyzeDisclosure]
-  );
-
-  // 构建Excel行数据的通用函数（支持全部或单个议题）
-  const buildExcelRows = useCallback(
-    (filterIssueName?: string) => {
-      const statusMap: Record<string, string> = {
-        met: "满足要求",
-        partial: "部分满足",
-        not_met: "未满足",
-        not_found: "本次未找到相关披露",
-        insufficient_basis: "判断依据不足",
-      };
-
-      const rows: string[][] = [
-        [
-          "指标归属",
-          "指标名称",
-          "权重",
-          "满足状态",
-          "分析结果",
-          "信息出处",
-          "方法学定义",
-        ],
-      ];
-
-      if (data) {
-        for (const pillar of data.pillars) {
-          const pillarLabel = pillarConfig[pillar.name]?.label || pillar.name;
-          for (const issue of pillar.keyIssues) {
-            if (filterIssueName && issue.name !== filterIssueName) continue;
-            const result = analysisResults.get(issue.name);
-            if (!result) continue;
-
-            rows.push([
-              `${pillarLabel} - ${issue.name}`,
-              "总体评估",
-              `${issue.weight}`,
-              "",
-              result.overallAssessment,
-              "",
-              "",
-            ]);
-
-            for (const analysis of result.analyses) {
-              const allIndicators = [
-                ...issue.practices.map(p => ({
-                  name: p.name,
-                  weight: p.weight,
-                })),
-                ...issue.performances.map(p => ({
-                  name: p.name,
-                  weight: p.weight,
-                })),
-              ];
-              const matchedIndicator = allIndicators.find(
-                ind =>
-                  ind.name === analysis.indicatorName ||
-                  analysis.indicatorName.includes(ind.name) ||
-                  ind.name.includes(analysis.indicatorName)
-              );
-              const weight = matchedIndicator
-                ? `${matchedIndicator.weight}`
-                : "";
-              const statusLabel = statusMap[analysis.status] || analysis.status;
-              // 查找方法学定义（不含评分标准）
-              const tooltip = findMethodologyTooltip(
-                issue.name,
-                analysis.indicatorName
-              );
-              const methodologyDef = tooltip?.definition || "";
-
-              rows.push([
-                `${pillarLabel} - ${issue.name}`,
-                analysis.indicatorName,
-                weight,
-                statusLabel,
-                `${analysis.summary}${analysis.details ? `\n${analysis.details}` : ""}`,
-                analysis.source || "",
-                methodologyDef,
-              ]);
-            }
-          }
-        }
-      }
-      return rows;
-    },
-    [analysisResults, data]
-  );
-
-  // Excel导出功能（全部议题）
-  const exportAnalysisToExcel = useCallback(() => {
-    if (analysisResults.size === 0) {
-      toast.error("暂无分析结果，请先对至少一个议题进行对照分析");
-      return;
-    }
-    const rows = buildExcelRows();
-    if (rows.length <= 1) {
-      toast.error("未找到可导出的分析数据");
-      return;
-    }
-
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [
-      { wch: 28 },
-      { wch: 35 },
-      { wch: 8 },
-      { wch: 14 },
-      { wch: 55 },
-      { wch: 40 },
-      { wch: 60 },
-    ];
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ESG对照分析结果");
-    const companyLabel = data?.companyName || "企业";
-    const dateLabel = data?.ratingDate
-      ? `_${data.ratingDate.replace(/\s/g, "")}`
-      : "";
-    XLSX.writeFile(wb, `ESG对照分析_${companyLabel}${dateLabel}.xlsx`);
-    toast.success("Excel文件已导出");
-  }, [analysisResults, data, buildExcelRows]);
-
-  // Excel导出功能（单个议题）
-  const exportIssueToExcel = useCallback(
-    (issue: KeyIssueData) => {
-      const rows = buildExcelRows(issue.name);
-      if (rows.length <= 1) {
-        toast.error("该议题暂无分析结果");
-        return;
-      }
-
-      const ws = XLSX.utils.aoa_to_sheet(rows);
-      ws["!cols"] = [
-        { wch: 28 },
-        { wch: 35 },
-        { wch: 8 },
-        { wch: 14 },
-        { wch: 55 },
-        { wch: 40 },
-        { wch: 60 },
-      ];
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, issue.name);
-      const companyLabel = data?.companyName || "企业";
-      XLSX.writeFile(wb, `ESG对照分析_${companyLabel}_${issue.name}.xlsx`);
-      toast.success(`${issue.name} 分析结果已导出`);
-    },
-    [buildExcelRows, data]
-  );
 
   // 添加同行企业
   const addPeer = useCallback(() => {
@@ -662,30 +401,6 @@ export default function SolarDrilldown() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    document
-                      .getElementById("report-analysis")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="border-esg-gov/40 text-esg-gov hover:bg-esg-gov-bg/40"
-                >
-                  <FileText className="w-3.5 h-3.5 mr-1.5" />
-                  ESG 报告对照
-                </Button>
-                {analysisResults.size > 0 && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={exportAnalysisToExcel}
-                    className="border-green-200 text-green-700 hover:bg-green-50"
-                  >
-                    <Download className="w-3.5 h-3.5 mr-1.5" />
-                    导出分析结果
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
                   onClick={() => {
                     setData(null);
                     setFileName("");
@@ -819,86 +534,6 @@ export default function SolarDrilldown() {
               </div>
             </div>
           )}
-          {/* ESG Report Upload for Analysis */}
-          <section className="container pb-4">
-            <motion.div
-              id="report-analysis"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.15 }}
-              className="rounded-xl border-2 border-esg-gov/30 bg-esg-gov-bg/20 p-5 shadow-sm"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-9 h-9 rounded-lg bg-esg-gov text-white flex items-center justify-center">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <h2
-                  className="text-lg font-bold text-foreground"
-                  style={{ fontFamily: "var(--font-sans)" }}
-                >
-                  ESG 报告对照分析
-                </h2>
-                <span className="ml-auto text-xs font-medium text-esg-gov bg-white/70 border border-esg-gov/20 rounded-full px-2 py-1">
-                  重点功能
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4 ml-11">
-                上传 PDF 后可按议题对照。调用 AI
-                时，报告会传送至配置的模型服务；判断及页码需人工复核。
-              </p>
-
-              {!reportFile ? (
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <input
-                    ref={reportInputRef}
-                    type="file"
-                    accept=".pdf"
-                    className="hidden"
-                    onChange={e => {
-                      const file = e.target.files?.[0];
-                      if (file) handleReportUpload(file);
-                    }}
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => reportInputRef.current?.click()}
-                    className="border-dashed border-2 h-12 px-6"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    上传企业 ESG/可持续发展报告（PDF）
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    支持 PDF，最大 20 MB
-                  </span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-esg-gov-bg/30 border border-esg-gov/20">
-                  <FileText className="w-5 h-5 text-esg-gov shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-foreground truncate">
-                      {reportFileName}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      已加载，可在下方各议题中点击「对照分析」按钮
-                      {!hasAnalysisApi ? "（尚未配置 AI 分析服务）" : ""}
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setReportFile(null);
-                      setReportFileName("");
-                      setAnalysisResults(new Map());
-                    }}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              )}
-            </motion.div>
-          </section>
-
           {/* Pillar Sections */}
           <section className="container pb-6 space-y-4">
             {data.pillars.map((pillar, idx) => (
@@ -912,11 +547,6 @@ export default function SolarDrilldown() {
                   pillar={pillar}
                   expandedIssues={expandedIssues}
                   toggleIssue={toggleIssue}
-                  reportLoaded={!!reportFile}
-                  analyzingIssue={analyzingIssue}
-                  analysisResults={analysisResults}
-                  onAnalyzeIssue={analyzeIssue}
-                  onExportIssue={exportIssueToExcel}
                 />
               </motion.div>
             ))}
@@ -1118,20 +748,10 @@ function PillarSection({
   pillar,
   expandedIssues,
   toggleIssue,
-  reportLoaded,
-  analyzingIssue,
-  analysisResults,
-  onAnalyzeIssue,
-  onExportIssue,
 }: {
   pillar: PillarData;
   expandedIssues: Set<string>;
   toggleIssue: (name: string) => void;
-  reportLoaded: boolean;
-  analyzingIssue: string | null;
-  analysisResults: Map<string, IssueAnalysisResult>;
-  onAnalyzeIssue: (issue: KeyIssueData) => void;
-  onExportIssue: (issue: KeyIssueData) => void;
 }) {
   const cfg = pillarConfig[pillar.name];
 
@@ -1181,11 +801,6 @@ function PillarSection({
             pillarBorder={cfg.border}
             expanded={expandedIssues.has(issue.name)}
             onToggle={() => toggleIssue(issue.name)}
-            reportLoaded={reportLoaded}
-            analyzing={analyzingIssue === issue.name}
-            analysisResult={analysisResults.get(issue.name)}
-            onAnalyze={() => onAnalyzeIssue(issue)}
-            onExportIssue={() => onExportIssue(issue)}
           />
         ))}
       </div>
@@ -1199,22 +814,12 @@ function KeyIssueCard({
   pillarBorder,
   expanded,
   onToggle,
-  reportLoaded,
-  analyzing,
-  analysisResult,
-  onAnalyze,
-  onExportIssue,
 }: {
   issue: KeyIssueData;
   pillarColor: string;
   pillarBorder: string;
   expanded: boolean;
   onToggle: () => void;
-  reportLoaded: boolean;
-  analyzing: boolean;
-  analysisResult?: IssueAnalysisResult;
-  onAnalyze: () => void;
-  onExportIssue: () => void;
 }) {
   const methodology = findIssueMethodology(issue.name);
 
@@ -1443,101 +1048,6 @@ function KeyIssueCard({
                       />
                     ))}
                   </div>
-                </div>
-              )}
-
-              {/* Analyze Button & Results */}
-              {reportLoaded && (
-                <div className="rounded-lg border border-esg-gov/20 bg-esg-gov-bg/20 p-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-1.5">
-                      <Target className="w-3.5 h-3.5 text-esg-gov" />
-                      <span className="text-xs font-semibold text-esg-gov">
-                        ESG 报告对照分析
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      {analysisResult && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={onExportIssue}
-                          className="h-7 text-xs border-green-200 text-green-700 hover:bg-green-50"
-                        >
-                          <Download className="w-3 h-3 mr-1" />
-                          导出本议题
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={onAnalyze}
-                        disabled={analyzing}
-                        className="h-7 text-xs bg-esg-gov hover:bg-esg-gov/90 text-white"
-                      >
-                        {analyzing ? (
-                          <>
-                            <Loader2 className="w-3 h-3 mr-1 animate-spin" />{" "}
-                            分析中...
-                          </>
-                        ) : analysisResult ? (
-                          <>
-                            <CheckCircle2 className="w-3 h-3 mr-1" /> 重新分析
-                          </>
-                        ) : (
-                          <>
-                            <Target className="w-3 h-3 mr-1" /> 对照分析
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Analysis Results */}
-                  {analysisResult && (
-                    <div className="space-y-2 mt-3">
-                      {/* Overall Assessment */}
-                      <div className="rounded-lg bg-white/80 border border-border p-3">
-                        <div className="text-xs font-semibold text-foreground mb-1">
-                          总体评估
-                        </div>
-                        <div className="text-xs text-muted-foreground leading-relaxed prose prose-xs max-w-none">
-                          <Streamdown>
-                            {analysisResult.overallAssessment}
-                          </Streamdown>
-                        </div>
-                      </div>
-
-                      {/* Per-Indicator Results */}
-                      {analysisResult.analyses.map((a, idx) => (
-                        <div
-                          key={idx}
-                          className="rounded-lg bg-white/80 border border-border p-3"
-                        >
-                          <div className="flex items-center gap-2 mb-1.5">
-                            <DisclosureStatusIcon status={a.status} />
-                            <span className="text-xs font-semibold text-foreground">
-                              {a.indicatorName}
-                            </span>
-                            <DisclosureStatusBadge status={a.status} />
-                          </div>
-                          <div className="text-xs text-muted-foreground leading-relaxed">
-                            {a.summary}
-                          </div>
-                          {a.source && (
-                            <div className="mt-1.5 flex items-center gap-1 text-[10px] text-blue-600">
-                              <FileText className="w-3 h-3" />
-                              <span>信息出处：{a.source}</span>
-                            </div>
-                          )}
-                          {a.details && (
-                            <div className="mt-1.5 text-[11px] text-muted-foreground/80 leading-relaxed border-t border-border/50 pt-1.5">
-                              {a.details}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
                 </div>
               )}
             </div>
@@ -1921,50 +1431,6 @@ function NoMethodologyPopover({
         建议参考 MSCI 官方方法学文档获取详细定义。
       </div>
     </div>
-  );
-}
-
-function DisclosureStatusIcon({ status }: { status: string }) {
-  switch (status) {
-    case "met":
-      return <CheckCircle2 className="w-3.5 h-3.5 text-green-600 shrink-0" />;
-    case "partial":
-      return <AlertCircle className="w-3.5 h-3.5 text-amber-500 shrink-0" />;
-    case "not_met":
-      return <XCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />;
-    default:
-      return <HelpCircle className="w-3.5 h-3.5 text-gray-400 shrink-0" />;
-  }
-}
-
-function DisclosureStatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    met: {
-      label: "满足要求",
-      className: "bg-green-50 text-green-700 border-green-200",
-    },
-    partial: {
-      label: "部分满足",
-      className: "bg-amber-50 text-amber-700 border-amber-200",
-    },
-    not_met: {
-      label: "未满足",
-      className: "bg-red-50 text-red-700 border-red-200",
-    },
-    insufficient_basis: {
-      label: "判断依据不足",
-      className: "bg-gray-50 text-gray-600 border-gray-200",
-    },
-    not_found: {
-      label: "本次未找到相关披露",
-      className: "bg-gray-50 text-gray-500 border-gray-200",
-    },
-  };
-  const c = config[status] || config.not_found;
-  return (
-    <span className={`px-1.5 py-0.5 rounded text-[10px] border ${c.className}`}>
-      {c.label}
-    </span>
   );
 }
 

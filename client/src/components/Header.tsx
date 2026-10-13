@@ -36,6 +36,12 @@ export default function Header() {
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1.5">
           <Link
+            href="/report-analysis"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${location === "/report-analysis" ? "bg-blue-50 text-blue-800 border-blue-300" : "border-border text-foreground hover:bg-blue-50"}`}
+          >
+            报告对照分析
+          </Link>
+          <Link
             href="/"
             className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors no-underline border ${
               location === "/"
@@ -105,6 +111,13 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border/50 bg-white/95 backdrop-blur-md">
           <nav className="container py-3 flex flex-col gap-1">
+            <Link
+              href="/report-analysis"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-3 rounded-lg text-sm font-semibold border border-blue-200 text-blue-800 no-underline"
+            >
+              报告对照分析
+            </Link>
             <Link
               href="/"
               className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${
