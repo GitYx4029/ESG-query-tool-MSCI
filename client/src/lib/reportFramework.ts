@@ -44,12 +44,12 @@ const rows: Record<string, Row[]> = {
     [
       "员工与承包商死亡人数",
       "按年度分别列明员工、承包商因工死亡人数和覆盖范围，零值也属于数据。",
-      "因工死亡|工伤死亡|死亡人数|死亡事故|fatalit",
+      "因工死亡|因公死亡|工伤死亡|死亡人数|死亡事故|死亡的员工|fatalit",
     ],
     [
       "工伤率及计算口径",
       "披露LTIR或TRIR、年度、工时分母及员工/承包商范围；不将普通事故数等同于工伤率。",
-      "LTIR|LTIFR|TRIR|失时|工伤率|可记录工伤|lost time|recordable injury",
+      "LTIR|LTIFR|TRIR|TRIFR|失时|损工事故率|工伤率|每百万工时安全事故率|可记录工伤|lost time|recordable injury",
     ],
   ],
   "Product Safety & Quality": [
@@ -88,7 +88,7 @@ const rows: Record<string, Row[]> = {
     [
       "培训与审计",
       "披露商业道德培训覆盖、审计或检查的范围、频率和执行情况；认证不能自动证明道德审计。",
-      "廉洁培训|反腐培训|道德培训|合规审计|廉洁检查|ethics training|ethics audit|anti-corruption training|anti-bribery training|code of conduct training|反贪污培训",
+      "廉洁培训|廉政教育|反腐败培训|反腐培训|道德培训|合规审计|廉洁检查|ethics training|ethics audit|anti-corruption training|anti-bribery training|code of conduct training|反贪污培训",
     ],
     [
       "案件与风险管理",
@@ -270,7 +270,7 @@ const rows: Record<string, Row[]> = {
     [
       "清洁技术业务",
       "说明清洁技术产品与业务的定义及范围。",
-      "清洁技术|光伏组件|新能源汽车|clean tech|solar module",
+      "清洁技术|光伏逆变器|储能系统|光伏组件|新能源汽车|clean tech|solar module",
     ],
     [
       "研发与投入",
@@ -280,7 +280,7 @@ const rows: Record<string, Row[]> = {
     [
       "业务绩效",
       "披露清洁技术收入、产品销量及统计口径。",
-      "清洁技术收入|组件出货|清洁产品|clean technology revenue|shipment",
+      "清洁技术收入|逆变器出货|储能出货|组件出货|清洁产品|clean technology revenue|shipment",
     ],
   ],
   "Opportunities in Renewable Energy": [

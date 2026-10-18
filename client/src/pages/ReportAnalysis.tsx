@@ -21,6 +21,7 @@ import {
 } from "@/lib/esgData";
 import { importanceColors } from "@/lib/importanceStyle";
 import { criteriaForIssue } from "@/lib/reportFramework";
+import { buildReportCsv, reviewLabels, type ManualReview } from "@/lib/reportExport";
 import {
   analyzeLocally,
   buildEvidenceIndex,
@@ -62,6 +63,7 @@ export default function ReportAnalysis() {
   const [error, setError] = useState("");
   const [industryName, setIndustryName] = useState("");
   const [confirmed, setConfirmed] = useState(false);
+  const [reviews, setReviews] = useState<Record<string, ManualReview>>({});
   const [results, setResults] = useState<Record<string, ReportFinding[]>>({});
   const [aiReady, setAiReady] = useState(false);
   const [aiIssue, setAiIssue] = useState<string | null>(null);
@@ -125,6 +127,7 @@ export default function ReportAnalysis() {
   );
   function resetFindings() {
     setConfirmed(false);
+    setReviews({});
     setResults({});
     setAiError({});
     setSearchDone("");
@@ -182,7 +185,7 @@ export default function ReportAnalysis() {
       }
       setError(
         abort.signal.aborted
-          ? "识别已取消；已识别的页面仍可分析。"
+          ? partial.some(p => p.method !== "unread") ? "识别已取消；已识别的页面仍可分析。" : "识别已取消，可以重新选择报告。"
           : e instanceof Error
             ? e.message
             : "报告读取失败，请检查文件或重试。"
@@ -273,7 +276,7 @@ export default function ReportAnalysis() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "AI服务暂不可用");
-      const verified = validateReviewOutput(body, input).findings;
+      const verified = validateReviewOutput(body, input).findings.map(f => ({...f, elements: local.find(l => l.criterionId === f.criterionId)?.elements}));
       // Runtime returns canonical evidence; reconstruct the same validator payload.
       aiCache.current.set(key, verified);
       setResults(prev => ({ ...prev, [issue]: verified }));
@@ -303,52 +306,12 @@ export default function ReportAnalysis() {
     setViewer({ evidence, url: URL.createObjectURL(source) });
   }
   function exportCsv() {
-    const rows = [
-      [
-        "文件",
-        "行业",
-        "议题",
-        "核验项",
-        "判断",
-        "说明",
-        "待补充",
-        "文件页序",
-        "原文",
-        "识别方式",
-        "框架版本",
-        "识别范围",
-      ],
-    ];
-    for (const [issue, findings] of Object.entries(results))
-      for (const f of findings) {
-        const c = criteriaForIssue(issue).find(c => c.id === f.criterionId);
-        rows.push([
-          demo ? "虚构演示" : files.map(f => f.name).join(" / "),
-          industryNamesCN[industryName] ?? industryName,
-          issueNamesCN[issue] ?? issue,
-          c?.label ?? f.criterionId,
-          statusLabels[f.status],
-          f.summary,
-          f.gaps.join("；"),
-          f.evidence.map(e => String(e.page)).join("；"),
-          f.evidence.map(e => e.quote).join("\n\n"),
-          f.evidence
-            .map(e =>
-              e.method === "ocr"
-                ? `OCR ${Math.round(e.confidence ?? 0)}%`
-                : "PDF文字"
-            )
-            .join("；"),
-          REPORT_FRAMEWORK_VERSION,
-          `${pages.length - unread.length}/${pages.length}页已识别；${weak.length}页OCR可信度较低`,
-        ]);
-      }
-    const cell = (value: string) =>
-      `"${(/^[=+\-@\t\r]/.test(value) ? "'" : "") + value.replace(/"/g, '""')}"`;
-    const blob = new Blob(
-      ["\uFEFF" + rows.map(r => r.map(cell).join(",")).join("\r\n")],
-      { type: "text/csv;charset=utf-8" }
-    );
+    const { csv } = buildReportCsv({
+      file: demo ? "虚构演示" : files.map(f => f.name).join(" / "),
+      industry: industryNamesCN[industryName] ?? industryName,
+      results, pages, reviews,
+    });
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob),
       a = document.createElement("a");
     a.href = url;
@@ -436,6 +399,7 @@ export default function ReportAnalysis() {
                 resetFindings();
                 setFiles([]);
                 setDemo(true);
+                setViewer(null);
                 setError("");
                 setPages(createDemoReport());
                 setIndustryName("Real Estate Management & Development");
@@ -552,6 +516,7 @@ export default function ReportAnalysis() {
                         disabled={Boolean(aiIssue)}
                         className="text-sm font-semibold text-left"
                         onClick={() => {
+                          setReviews({});
                           setIndustryName(c.industry.name);
                           setConfirmed(false);
                           setResults({});
@@ -587,6 +552,7 @@ export default function ReportAnalysis() {
                     value={industryName}
                     disabled={Boolean(aiIssue)}
                     onChange={e => {
+                      setReviews({});
                       setIndustryName(e.target.value);
                       setConfirmed(false);
                       setResults({});
@@ -772,6 +738,26 @@ export default function ReportAnalysis() {
                               待补充：{f.gaps.join("；")}
                             </p>
                           )}
+                          {f.elements && f.elements.length > 0 && (
+                            <div className="rounded-lg bg-slate-50 p-3 text-xs space-y-2">
+                              <p className="font-medium">表格要素摘录 · 请核对原页</p>
+                              {f.elements.map(element => (
+                                <p key={element.label} className="leading-relaxed">
+                                  <strong>{element.label}：</strong>{element.detail}
+                                  {element.page ? `（文件第${element.page}页）` : ""}
+                                </p>
+                              ))}
+                            </div>
+                          )}
+                          <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                            人工复核
+                            <select aria-label={`${c.label}人工复核`} className="border rounded p-2 bg-white text-foreground"
+                              value={reviews[c.id] ?? "pending"}
+                              onChange={e => setReviews(prev => ({...prev, [c.id]: e.target.value as ManualReview}))}>
+                              {Object.entries(reviewLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
+                            </select>
+                            <span>随证据表导出；刷新或换报告后清除</span>
+                          </label>
                           {f.evidence.map(e => (
                             <EvidenceCard
                               key={e.id}
