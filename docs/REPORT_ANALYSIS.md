@@ -1,4 +1,4 @@
-# 独立报告对照分析 · v1.10
+# 独立报告对照分析 · v1.11
 
 入口 `/report-analysis`，首页首位卡片与桌面/移动导航均可到达。不需要评分Excel或管理员密码。企业分析中已移除报告上传、对照按钮和旧模型调用。
 
@@ -50,3 +50,12 @@
 代码测试包含：全部议题覆盖、目录/索引排除、数字0、英文检索、物理页码、低可信度/未识别页、引用伪造/缺项/重复项、未配置模型、上游失败、隐私载荷拒绝和每日预算上限。保留企业分析密码保护、原有Excel真实评分与匿名统计暂停行为。
 
 可重复执行：`npm run check`；`npm test`；`npm run report:assets`；`npm run build`。准备测试文件后执行 `npm run report:qa -- /absolute/path/to/fixtures`（text-report.pdf、scanned-report.pdf、report-page-3.png）。公开报告仅用于验收，不提交到仓库。
+
+
+## v1.11：三份真实报告回归
+
+增加简繁体及中文字符间空格的检索归一化（引用保留原文）、服装与逆变器/储能业务候选、基于文字坐标的绩效表行列复原。数字类核验项优先展示表格行；职业安全示例要素保留年度、单位、员工/承包商范围，不将一般安全事故率改称LTIR。
+
+新增人工复核选项，随CSV导出；每段原文各占一行并紧邻其文件页序。复核记录仅在当前页面保留，刷新、换报告或重新OCR后清除。未识别页、无法判定的统计对象、复杂表格和缺失要素保持待核实。
+
+实测与验证边界见 [REPORT_SAMPLE_ACCEPTANCE.md](REPORT_SAMPLE_ACCEPTANCE.md)。批量PDF命令：`node --import tsx scripts/test-report-samples.ts /path/to/report1.pdf /path/to/report2.pdf`。该脚本读取完整PDF并运行与页面共用的解析、行业匹配、检索、逐字引用校验和CSV生成，不调用模型。

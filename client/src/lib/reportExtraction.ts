@@ -1,6 +1,7 @@
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from "pdfjs-dist";
 import type { Worker } from "tesseract.js";
 import type { ReportPage } from "@shared/report";
+import { textFromPdfItems, type PdfTextItem } from "./reportText";
 export interface ExtractionProgress {
   message: string;
   current: number;
@@ -107,27 +108,22 @@ export async function extractReport(
         });
         const page = await pdf.getPage(n);
         let text = "";
+        let tables: ReportPage["tables"] = [];
         try {
           const content = await page.getTextContent();
-          let y: number | undefined;
-          for (const item of content.items)
-            if ("str" in item) {
-              const lineChange =
-                y !== undefined && Math.abs(item.transform[5] - y) > 3;
-              text +=
-                (lineChange ? "\n" : " ") +
-                item.str +
-                (item.hasEOL ? "\n" : "");
-              y = item.transform[5];
-            }
+          const parsed = textFromPdfItems(
+            content.items.filter(i => "str" in i) as PdfTextItem[],
+            page.getViewport({ scale: 1 }).width
+          );
+          text = parsed.text;
+          tables = parsed.tables;
         } catch {
           /* Unreadable pages can be retried with OCR. */
         }
-        text = text.trim();
         const readable =
           text.replace(/\s/g, "").length >= 35 &&
           (text.match(/[\uFFFD]/g)?.length ?? 0) < text.length * 0.1;
-        pages.push({ page: n, text, method: readable ? "text" : "unread" });
+        pages.push({ page: n, text, tables, method: readable ? "text" : "unread" });
         page.cleanup();
       }
     } else {

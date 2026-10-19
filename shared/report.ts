@@ -6,11 +6,21 @@ export type DisclosureStatus =
   | "partial"
   | "not_found"
   | "insufficient";
+export interface ReportTable {
+  columns: string[];
+  rows: string[][];
+}
+export interface ReportElement {
+  label: string;
+  detail: string;
+  page?: number;
+}
 export interface ReportPage {
   page: number;
   text: string;
   method: "text" | "ocr" | "unread";
   confidence?: number;
+  tables?: ReportTable[];
 }
 export interface Evidence {
   id: string;
@@ -33,6 +43,7 @@ export interface ReportFinding {
   gaps: string[];
   evidence: Evidence[];
   ai?: boolean;
+  elements?: ReportElement[];
 }
 export interface ReviewInput {
   version: string;

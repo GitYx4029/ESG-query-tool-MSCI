@@ -1,5 +1,6 @@
 import { getAllIndustries, industryNamesCN, type Industry } from "./esgData";
 import { criteriaForIssue } from "./reportFramework";
+import { checkElements } from "./reportChecks";
 import {
   REPORT_FRAMEWORK_VERSION,
   type Evidence,
@@ -8,8 +9,8 @@ import {
   type ReportCriterion,
   type ReviewInput,
 } from "@shared/report";
-export const normalizeText = (text: string) =>
-  text.normalize("NFKC").toLowerCase().replace(/\s+/g, " ").trim();
+import { normalizeText } from "./reportNormalize";
+export { normalizeText } from "./reportNormalize";
 export function isContentsPage(text: string) {
   const lines = text.split(/\n/).filter(x => x.trim());
   const heading = text.slice(0, 700).replace(/\s+/g, " ");
@@ -40,6 +41,7 @@ export type EvidenceIndex = Array<{
   quote: string;
   normalized: string;
   id: string;
+  table?: boolean;
 }>;
 export function buildEvidenceIndex(pages: ReportPage[]): EvidenceIndex {
   return pages
@@ -57,6 +59,12 @@ export function buildEvidenceIndex(pages: ReportPage[]): EvidenceIndex {
             id: `p${page.page}-s${start}`,
           });
       }
+      for (const [t, table] of (page.tables ?? []).entries()) {
+        for (const [r, row] of table.rows.entries()) {
+          const quote = row.join(" | ");
+          if (quote.length >= 15) result.push({page,quote,normalized:normalizeText(quote),id:`p${page.page}-t${t}-r${r}`,table:true});
+        }
+      }
       return result;
     });
 }
@@ -66,6 +74,7 @@ export function findEvidence(
   limit = 3
 ): Evidence[] {
   const terms = criterion.keywords.map(normalizeText);
+  const numeric = /数据|人数|数量|面积|工伤率|量化|绩效|覆盖数据/.test(criterion.label);
   return index
     .map(block => ({
       ...block,
@@ -81,6 +90,7 @@ export function findEvidence(
     )
     .sort(
       (a, b) =>
+        (numeric ? Number(Boolean(b.table)) - Number(Boolean(a.table)) : 0) ||
         b.hits - a.hits ||
         (b.page.confidence ?? 100) - (a.page.confidence ?? 100) ||
         a.page.page - b.page.page
@@ -92,9 +102,10 @@ export function findEvidence(
           .some(
             prev =>
               prev.page.page === b.page.page &&
-              Math.abs(
-                Number(prev.id.split("-s")[1]) - Number(b.id.split("-s")[1])
-              ) < 700
+              (prev.quote.includes(b.quote) || b.quote.includes(prev.quote) ||
+                (!prev.table && !b.table && Math.abs(
+                  Number(prev.id.split("-s")[1]) - Number(b.id.split("-s")[1])
+                ) < 700))
           )
     )
     .slice(0, limit)
@@ -137,6 +148,7 @@ export function analyzeLocally(
             ? "仍有未识别或低可信度页面，暂不能判断披露情况。"
             : "在本次可检索文本中未找到相关证据；可补充关键词或其他报告复核。",
       gaps: [],
+      elements: checkElements(c, pages),
     };
   });
 }
@@ -222,7 +234,14 @@ const businessTerms: Record<string, string[]> = {
     "it services",
     "information technology services",
   ],
+  "Textiles, Apparel & Luxury Goods": [
+    "羽绒服", "纺织服装", "服装品牌", "服装制造", "成衣制造", "apparel manufacturing", "down apparel", "luxury goods",
+  ],
+  "Electrical Equipment": [
+    "光伏逆变器", "储能系统", "风电变流", "电气设备制造", "新能源电源设备", "电力电子转换设备", "photovoltaic inverter", "energy storage system", "electrical equipment manufacturing",
+  ],
   Chemicals: [
+    "尼龙66", "己二酸", "化学纤维", "高分子材料",
     "化工生产",
     "化学品制造",
     "化工产品",
@@ -272,7 +291,7 @@ export function identifyIndustries(pages: ReportPage[]): IndustryCandidate[] {
     b =>
       b.page.page <= 12 ||
       /主营|主要业务|业务概况|公司概况|关于本|about (?:us|the company|this report)|principal business|business overview/i.test(
-        b.quote
+        normalizeText(b.quote)
       )
   );
   const candidates = getAllIndustries()
@@ -300,7 +319,7 @@ export function identifyIndustries(pages: ReportPage[]): IndustryCandidate[] {
             m.matched.length &&
             (businessTerms[industry.name] ||
               /主营|主要业务|从事|专注|principal business|our business|company (?:provides|manufactures|develops)/i.test(
-                m.block.quote
+                normalizeText(m.block.quote)
               ))
         );
       const best = matches.sort(
@@ -311,7 +330,7 @@ export function identifyIndustries(pages: ReportPage[]): IndustryCandidate[] {
       if (!best) return null;
       const explicit =
         /主营|主要业务|业务涵盖|从事|专注|principal business|we (?:manufacture|develop|provide)|our business/i.test(
-          best.block.quote
+          normalizeText(best.block.quote)
         );
       const strong =
         (best.matched.length >= 2 || explicit) &&
