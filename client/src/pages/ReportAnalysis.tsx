@@ -276,7 +276,13 @@ export default function ReportAnalysis() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error || "AI服务暂不可用");
-      const verified = validateReviewOutput(body, input).findings.map(f => ({...f, elements: local.find(l => l.criterionId === f.criterionId)?.elements}));
+      const verified = validateReviewOutput(body, input).findings.map(f => {
+        const original = local.find(l => l.criterionId === f.criterionId);
+        return {...f, elements: original?.elements, evidence: f.evidence.map(e => {
+          const source = original?.evidence.find(s => s.id === e.id);
+          return {...e, role: source?.role, context: source?.context};
+        })};
+      });
       // Runtime returns canonical evidence; reconstruct the same validator payload.
       aiCache.current.set(key, verified);
       setResults(prev => ({ ...prev, [issue]: verified }));
@@ -305,17 +311,17 @@ export default function ReportAnalysis() {
       : files[evidence.page - 1];
     setViewer({ evidence, url: URL.createObjectURL(source) });
   }
-  function exportCsv() {
+  function exportCsv(detail = false) {
     const { csv } = buildReportCsv({
       file: demo ? "虚构演示" : files.map(f => f.name).join(" / "),
       industry: industryNamesCN[industryName] ?? industryName,
-      results, pages, reviews,
+      results, pages, reviews, detail,
     });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob),
       a = document.createElement("a");
     a.href = url;
-    a.download = "ESG报告披露对照.csv";
+    a.download = detail ? "ESG报告证据明细.csv" : "ESG报告披露对照.csv";
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -591,13 +597,14 @@ export default function ReportAnalysis() {
                 </p>
               </div>
               <button
-                onClick={exportCsv}
+                onClick={() => exportCsv()}
                 className="border rounded-lg px-3 py-2 text-sm flex gap-2 items-center"
               >
                 <Download size={16} />
-                导出证据表 CSV
+                导出核验摘要 CSV
               </button>
             </div>
+            <button className="text-sm text-muted-foreground underline" onClick={() => exportCsv(true)}>导出逐条证据明细 CSV</button>
             <p className="text-sm text-muted-foreground leading-relaxed">
               本工具按 MSCI
               议题组织披露核验项，核验清单为项目整理。找到线索不等于充分披露，不生成评级或评分。页码使用文件页序；年报、治理报告等资料可能需要另行补充。
@@ -735,20 +742,32 @@ export default function ReportAnalysis() {
                           <p className="text-sm leading-relaxed">{f.summary}</p>
                           {f.gaps.length > 0 && (
                             <p className="text-sm text-amber-800">
-                              待补充：{f.gaps.join("；")}
+                              待核验：{f.gaps.join("；")}
                             </p>
                           )}
-                          {f.elements && f.elements.length > 0 && (
-                            <div className="rounded-lg bg-slate-50 p-3 text-xs space-y-2">
-                              <p className="font-medium">表格要素摘录 · 请核对原页</p>
-                              {f.elements.map(element => (
-                                <p key={element.label} className="leading-relaxed">
-                                  <strong>{element.label}：</strong>{element.detail}
-                                  {element.page ? `（文件第${element.page}页）` : ""}
-                                </p>
+                          <details className="pt-1">
+                            <summary className="text-sm text-blue-800 cursor-pointer">查看原文与要素（{f.evidence.length}条线索）{f.evidence.length ? ` · 文件第${[...new Set(f.evidence.map(e => e.page))].join("、")}页` : ""}</summary>
+                            <div className="mt-3 space-y-3">
+                              {f.elements && f.elements.length > 0 && (
+                                <div className="rounded-lg bg-slate-50 p-3 text-xs space-y-2">
+                                  <p className="font-medium">表格要素摘录 · 保留原指标口径</p>
+                                  {f.elements.map(element => (
+                                    <p key={element.label} className="leading-relaxed">
+                                      <strong>{element.label}：</strong>{element.detail}
+                                      {element.page ? `（文件第${element.page}页）` : ""}
+                                    </p>
+                                  ))}
+                                </div>
+                              )}
+                              {f.evidence.map(e => (
+                                <EvidenceCard
+                                  key={e.id}
+                                  evidence={e}
+                                  open={openEvidence}
+                                />
                               ))}
                             </div>
-                          )}
+                          </details>
                           <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                             人工复核
                             <select aria-label={`${c.label}人工复核`} className="border rounded p-2 bg-white text-foreground"
@@ -758,13 +777,6 @@ export default function ReportAnalysis() {
                             </select>
                             <span>随证据表导出；刷新或换报告后清除</span>
                           </label>
-                          {f.evidence.map(e => (
-                            <EvidenceCard
-                              key={e.id}
-                              evidence={e}
-                              open={openEvidence}
-                            />
-                          ))}
                         </article>
                       );
                     })}
@@ -846,14 +858,19 @@ function EvidenceCard({
           第{evidence.page}页 · 查看原文
         </button>
         <span className="text-muted-foreground">
+          {evidence.role === "table" ? "绩效表 · " : evidence.role === "case" ? "案例 · " : evidence.role === "statement" ? "声明 · " : evidence.role === "assurance" ? "鉴证 · " : "正文 · "}
           {evidence.method === "ocr"
             ? `OCR · 可信度${Math.round(evidence.confidence ?? 0)}%，请核对原图`
             : "PDF文字 · 文件页序"}
         </span>
       </div>
-      <blockquote className="mt-2 text-sm leading-relaxed whitespace-pre-wrap line-clamp-6">
+      <blockquote className="mt-2 text-sm leading-relaxed whitespace-pre-wrap">
         {evidence.quote}
       </blockquote>
+      {(evidence.context ?? []).map((context, i) => <div key={`${context.page}-${i}`} className="mt-3 border-t pt-2 text-xs text-muted-foreground whitespace-pre-wrap">
+        <button className="text-blue-800 underline mb-1" onClick={() => open({...evidence, page: context.page, quote: context.quote, context: []})}>表头／范围注释 · 文件第{context.page}页</button>
+        <p>{context.quote}</p>
+      </div>)}
     </div>
   );
 }

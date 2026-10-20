@@ -28,7 +28,7 @@ describe("real report regressions",()=>{
   const pages:ReportPage[]=[{page:167,method:"text",...parsed}];
   const results=analyzeLocally(buildEvidenceIndex(pages),pages,"Health & Safety");
   expect(results[3].elements?.find(e=>e.label==="员工死亡人数")?.detail).toContain("2025 年：0 人");
-  expect(results[3].elements?.find(e=>e.label==="承包商死亡人数")?.page).toBeUndefined();
+  expect(results[3].elements?.find(e=>e.label==="承包商／外包人员死亡人数（按原称谓）")?.page).toBeUndefined();
   expect(results[4].elements?.[0].detail).toContain("0.25 次/百万工时");
   expect(results[4].elements?.[1].detail).toContain("0.13 次/二十万工时");
  });
@@ -53,9 +53,9 @@ describe("real report regressions",()=>{
   expect(results[4].elements?.[0].page).toBeUndefined();
   expect(results[4].elements?.[2].detail).toContain("0.06 件/百万工时");
  });
- it("exports each quotation beside its own page and includes manual review",()=>{
+ it("exports detailed quotations beside their own pages and includes manual review",()=>{
   const findings=[{criterionId:"Health & Safety:4",status:"related" as const,summary:"test",gaps:[],evidence:[{id:"a",page:40,quote:'员工0人，"已确认"',method:"text" as const},{id:"b",page:51,quote:"承包商0人\n另一行",method:"text" as const}]}];
-  const result=buildReportCsv({file:" =SUM(1,2).pdf",industry:"Chemicals",results:{"Health & Safety":findings},pages:[],reviews:{"Health & Safety:4":"needs_more"}});
+  const result=buildReportCsv({file:" =SUM(1,2).pdf",industry:"Chemicals",results:{"Health & Safety":findings},pages:[],detail:true,reviews:{"Health & Safety:4":"needs_more"}});
   expect(result.rowCount).toBe(2);
   expect(result.csv).toContain('"40","员工0人，""已确认"""');
   expect(result.csv).toContain('"51","承包商0人\n另一行"');

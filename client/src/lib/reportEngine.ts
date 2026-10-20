@@ -1,40 +1,23 @@
 import { getAllIndustries, industryNamesCN, type Industry } from "./esgData";
 import { criteriaForIssue } from "./reportFramework";
-import { checkElements } from "./reportChecks";
-import {
-  REPORT_FRAMEWORK_VERSION,
-  type Evidence,
-  type ReportPage,
-  type ReportFinding,
-  type ReportCriterion,
-  type ReviewInput,
-} from "@shared/report";
+import { checkElements, reviewGaps, findingSummary } from "./reportChecks";
+import { REPORT_FRAMEWORK_VERSION, type Evidence, type ReportPage, type ReportFinding, type ReportCriterion, type ReviewInput, } from "@shared/report";
 import { normalizeText } from "./reportNormalize";
+import { runningText, sourceSegments, pageRole, noteContexts, relevantContexts, relevantToCriterion } from "./reportContext";
 export { normalizeText } from "./reportNormalize";
 export function isContentsPage(text: string) {
   const lines = text.split(/\n/).filter(x => x.trim());
   const heading = text.slice(0, 700).replace(/\s+/g, " ");
-  const indexHeading =
-    /(?:GRI|HKEX|ISSB|SASB).{0,60}(?:content index|内容索引|內容索引)/i.test(
-      heading
-    );
-  const continuedIndex =
-    /(?:GRI Standard.{0,40}Disclosure.{0,50}References|Topic Code Metrics References and Remarks)/i.test(
-      heading
-    );
-  const indexRows =
-    (text.match(/\b(?:[234]\d{2}-\d|[23]-\d{1,2}|[AB]\d{1,2}\.\d)\b/g) ?? [])
-      .length >= 4;
-  return (
-    /(?:^|\n)\s*(?:目录|目錄|contents|table of contents)\s*(?:\n|$)/i.test(
-      text.slice(0, 700)
-    ) ||
+  const indexHeading = /(?:GRI|HKEX|ISSB|SASB).{0,60}(?:content index|内容索引|內容索引)/i.test(heading);
+  const continuedIndex = /(?:GRI Standard.{0,40}Disclosure.{0,50}References|Topic Code Metrics References and Remarks)/i.test(heading);
+  const indexRows = (text.match(/\b(?:[234]\d{2}-\d|[23]-\d{1,2}|[AB]\d{1,2}\.\d)\b/g) ?? [])
+    .length >= 4;
+  return (/(?:^|\n)\s*(?:目\s*录|目\s*錄|contents|table of contents)\s*(?:\n|$)/i.test(text.slice(0, 700)) ||
     indexHeading ||
     continuedIndex ||
     indexRows ||
     lines.filter(l => /\.{3,}|…{2,}/.test(l)).length >=
-      Math.max(5, lines.length * 0.55)
-  );
+    Math.max(5, lines.length * 0.55));
 }
 export type EvidenceIndex = Array<{
   page: ReportPage;
@@ -42,113 +25,84 @@ export type EvidenceIndex = Array<{
   normalized: string;
   id: string;
   table?: boolean;
+  role: NonNullable<Evidence["role"]>;
+  context: NonNullable<Evidence["context"]>;
 }>;
 export function buildEvidenceIndex(pages: ReportPage[]): EvidenceIndex {
-  return pages
-    .filter(p => p.method !== "unread" && !isContentsPage(p.text))
-    .flatMap(page => {
-      const result: EvidenceIndex = [];
-      // Overlap keeps a table heading near data rows. Quotes always remain original substrings.
-      for (let start = 0; start < page.text.length; start += 650) {
-        const quote = page.text.slice(start, start + 900).trim();
+  const repeated = runningText(pages);
+  const notes = new Map(pages.map(p => [p.page, noteContexts(p, repeated)]));
+  return pages.filter(p => p.method !== "unread").flatMap(page => {
+    const segments = sourceSegments(page, repeated);
+    const cleaned = segments.join("\n");
+    if (isContentsPage(cleaned))
+      return [];
+    const role = pageRole(cleaned);
+    const result: EvidenceIndex = [];
+    for (const segment of segments) {
+      const body = segment.split("\n\n指标 | ")[0];
+      for (let start = 0; start < body.length; start += 400) {
+        const quote = body.slice(start, start + 600).trim();
         if (quote.length >= 20)
-          result.push({
-            page,
-            quote,
-            normalized: normalizeText(quote),
-            id: `p${page.page}-s${start}`,
-          });
+          result.push({ page, quote, normalized: normalizeText(quote), id: `p${page.page}-s${page.text.indexOf(quote)}`, role: role === "body" && /案例|case study/i.test(quote) ? "case" : role, context: [] });
       }
-      for (const [t, table] of (page.tables ?? []).entries()) {
-        for (const [r, row] of table.rows.entries()) {
-          const quote = row.join(" | ");
-          if (quote.length >= 15) result.push({page,quote,normalized:normalizeText(quote),id:`p${page.page}-t${t}-r${r}`,table:true});
-        }
+    }
+    for (const [t, table] of (page.tables ?? []).entries())
+      for (const [r, row] of table.rows.entries()) {
+        const quote = row.join(" | ");
+        const context = [{ page: page.page, quote: table.columns.join(" | ") }, ...(notes.get(page.page) ?? []), ...(notes.get(page.page + 1) ?? [])];
+        if (quote.length >= 12)
+          result.push({ page, quote, normalized: normalizeText(quote), id: `p${page.page}-t${t}-r${r}`, table: true, role: "table", context: relevantContexts(context, quote) });
       }
-      return result;
-    });
+    return result;
+  });
 }
-export function findEvidence(
-  index: EvidenceIndex,
-  criterion: ReportCriterion,
-  limit = 3
-): Evidence[] {
+export function findEvidence(index: EvidenceIndex, criterion: ReportCriterion, limit = criterion.id === "Carbon Emissions:1" ? 4 : 3): Evidence[] {
   const terms = criterion.keywords.map(normalizeText);
   const numeric = /数据|人数|数量|面积|工伤率|量化|绩效|覆盖数据/.test(criterion.label);
-  return index
-    .map(block => ({
-      ...block,
-      hits: terms.filter(t => block.normalized.includes(t)).length,
-    }))
-    .filter(
-      b =>
-        b.hits > 0 &&
-        (!criterion.groups ||
-          criterion.groups.every(group =>
-            group.some(t => b.normalized.includes(normalizeText(t)))
-          ))
-    )
-    .sort(
-      (a, b) =>
-        (numeric ? Number(Boolean(b.table)) - Number(Boolean(a.table)) : 0) ||
-        b.hits - a.hits ||
-        (b.page.confidence ?? 100) - (a.page.confidence ?? 100) ||
-        a.page.page - b.page.page
-    )
-    .filter(
-      (b, i, arr) =>
-        !arr
-          .slice(0, i)
-          .some(
-            prev =>
-              prev.page.page === b.page.page &&
-              (prev.quote.includes(b.quote) || b.quote.includes(prev.quote) ||
-                (!prev.table && !b.table && Math.abs(
-                  Number(prev.id.split("-s")[1]) - Number(b.id.split("-s")[1])
-                ) < 700))
-          )
-    )
-    .slice(0, limit)
-    .map(b => ({
-      id: b.id,
-      page: b.page.page,
-      quote: b.quote,
-      method: b.page.method as "text" | "ocr",
-      confidence: b.page.confidence,
-    }));
+  const candidates = index.map(block => ({ ...block, hits: terms.filter(t => block.normalized.includes(t)).length }))
+    .filter(b => b.hits > 0 && relevantToCriterion(criterion, b.quote, b.role) && (!criterion.groups || criterion.groups.every(g => g.some(t => b.normalized.includes(normalizeText(t))))))
+    .sort((a, b) => (numeric ? Number(Boolean(b.table)) - Number(Boolean(a.table)) : 0) || (a.role === "statement" ? 2 : a.role === "case" ? 1 : 0) - (b.role === "statement" ? 2 : b.role === "case" ? 1 : 0) ||
+      Number(/仅为|园区/.test(a.context.map(c => c.quote).join(""))) - Number(/仅为|园区/.test(b.context.map(c => c.quote).join(""))) || b.hits - a.hits || (b.page.confidence ?? 100) - (a.page.confidence ?? 100) || a.page.page - b.page.page);
+  const chosen: typeof candidates = [];
+  // Cover distinct requested elements before adding similar supplementary rows.
+  const families = criterion.id === "Carbon Emissions:1" ? [/范围\s*[1一]|scope\s*1/, /范围\s*[2二]|scope\s*2/, /范围\s*[3三]|scope\s*3/]
+    : criterion.id === "Health & Safety:4" ? [/员工|职工|employee/, /承包|外包|contractor/]
+      : criterion.id === "Supply Chain Labor Standards:3" ? [/审核|审计|audit/, /整改|关闭|corrective/] : [];
+  const add = (b: typeof candidates[number]) => {
+    if (chosen.some(p => p.id === b.id || p.normalized === b.normalized && JSON.stringify(p.context.map(c => normalizeText(c.quote))) === JSON.stringify(b.context.map(c => normalizeText(c.quote))) || p.page.page === b.page.page && (p.quote.includes(b.quote) || b.quote.includes(p.quote) || !p.table && !b.table && Math.abs(Number(p.id.split("-s")[1]) - Number(b.id.split("-s")[1])) < 400)))
+      return;
+    chosen.push(b);
+  };
+  for (const family of families) {
+    const b = candidates.find(b => family.test(b.normalized));
+    if (b)
+      add(b);
+  }
+  for (const b of candidates) {
+    if (chosen.length >= limit)
+      break;
+    add(b);
+  }
+  return chosen.slice(0, limit).map(b => ({ id: b.id, page: b.page.page, quote: b.quote, method: b.page.method as "text" | "ocr", confidence: b.page.confidence, role: b.role, context: b.context }));
 }
-export function analyzeLocally(
-  index: EvidenceIndex,
-  pages: ReportPage[],
-  issue: string
-): ReportFinding[] {
-  const incomplete = pages.some(
-    p =>
-      p.method === "unread" || (p.method === "ocr" && (p.confidence ?? 0) < 60)
-  );
+export function analyzeLocally(index: EvidenceIndex, pages: ReportPage[], issue: string): ReportFinding[] {
+  const incomplete = pages.some(p => p.method === "unread" || (p.method === "ocr" && (p.confidence ?? 0) < 60));
   return criteriaForIssue(issue).map(c => {
     const evidence = findEvidence(index, c);
-    const weak =
-      evidence.length > 0 &&
+    const weak = evidence.length > 0 &&
       evidence.every(e => e.method === "ocr" && (e.confidence ?? 0) < 60);
+    const elements = checkElements(c, pages, evidence);
     return {
       criterionId: c.id,
       evidence,
-      status:
-        weak || (!evidence.length && incomplete)
-          ? "insufficient"
-          : evidence.length
-            ? "related"
-            : "not_found",
-      summary: weak
-        ? "OCR文字可信度较低，请查看原页核对。"
+      status: weak || (!evidence.length && incomplete)
+        ? "insufficient"
         : evidence.length
-          ? "已定位相关原文；是否覆盖指标要求，需对照范围、年度与数据口径复核。"
-          : incomplete
-            ? "仍有未识别或低可信度页面，暂不能判断披露情况。"
-            : "在本次可检索文本中未找到相关证据；可补充关键词或其他报告复核。",
-      gaps: [],
-      elements: checkElements(c, pages),
+          ? "related"
+          : "not_found",
+      summary: weak ? "OCR文字可信度较低，请查看原页核对。" : findingSummary(evidence, elements, c),
+      gaps: reviewGaps(c, evidence, elements),
+      elements,
     };
   });
 }
@@ -238,7 +192,7 @@ const businessTerms: Record<string, string[]> = {
     "羽绒服", "纺织服装", "服装品牌", "服装制造", "成衣制造", "apparel manufacturing", "down apparel", "luxury goods",
   ],
   "Electrical Equipment": [
-    "光伏逆变器", "储能系统", "风电变流", "电气设备制造", "新能源电源设备", "电力电子转换设备", "photovoltaic inverter", "energy storage system", "electrical equipment manufacturing",
+    "低压电器", "断路器", "配电设备", "输配电", "光伏逆变器", "储能系统", "风电变流", "电气设备制造", "新能源电源设备", "电力电子转换设备", "photovoltaic inverter", "energy storage system", "electrical equipment manufacturing",
   ],
   Chemicals: [
     "尼龙66", "己二酸", "化学纤维", "高分子材料",
@@ -287,13 +241,8 @@ export function identifyIndustries(pages: ReportPage[]): IndustryCandidate[] {
   // Prefer business descriptions and introductory pages; sustainability projects
   // (e.g. rooftop solar at a bank) must not determine a company's industry.
   const index = buildEvidenceIndex(pages);
-  const business = index.filter(
-    b =>
-      b.page.page <= 12 ||
-      /主营|主要业务|业务概况|公司概况|关于本|about (?:us|the company|this report)|principal business|business overview/i.test(
-        normalizeText(b.quote)
-      )
-  );
+  const business = index.filter(b => b.page.page <= 12 ||
+    /主营|主要业务|业务概况|公司概况|关于本|about (?:us|the company|this report)|principal business|business overview/i.test(normalizeText(b.quote)));
   const candidates = getAllIndustries()
     .map(industry => {
       const terms = businessTerms[industry.name] ?? [
@@ -305,39 +254,24 @@ export function identifyIndustries(pages: ReportPage[]): IndustryCandidate[] {
           block,
           matched: terms.filter(t => {
             const term = normalizeText(t);
-            if (term.length < 3) return false;
+            if (term.length < 3)
+              return false;
             if (/^[a-z &,-]+$/.test(term))
-              return new RegExp(
-                `\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
-                "i"
-              ).test(block.normalized);
+              return new RegExp(`\\b${term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(block.normalized);
             return block.normalized.includes(term);
           }),
         }))
-        .filter(
-          m =>
-            m.matched.length &&
-            (businessTerms[industry.name] ||
-              /主营|主要业务|从事|专注|principal business|our business|company (?:provides|manufactures|develops)/i.test(
-                normalizeText(m.block.quote)
-              ))
-        );
-      const best = matches.sort(
-        (a, b) =>
-          b.matched.length - a.matched.length ||
-          a.block.page.page - b.block.page.page
-      )[0];
-      if (!best) return null;
-      const explicit =
-        /主营|主要业务|业务涵盖|从事|专注|principal business|we (?:manufacture|develop|provide)|our business/i.test(
-          normalizeText(best.block.quote)
-        );
-      const strong =
-        (best.matched.length >= 2 || explicit) &&
-        !(
-          best.block.page.method === "ocr" &&
-          (best.block.page.confidence ?? 0) < 60
-        );
+        .filter(m => m.matched.length &&
+          (businessTerms[industry.name] ||
+            /主营|主要业务|从事|专注|principal business|our business|company (?:provides|manufactures|develops)/i.test(normalizeText(m.block.quote))));
+      const best = matches.sort((a, b) => b.matched.length - a.matched.length ||
+        a.block.page.page - b.block.page.page)[0];
+      if (!best)
+        return null;
+      const explicit = /主营|主要业务|业务涵盖|从事|专注|principal business|we (?:manufacture|develop|provide)|our business/i.test(normalizeText(best.block.quote));
+      const strong = (best.matched.length >= 2 || explicit) &&
+        !(best.block.page.method === "ocr" &&
+          (best.block.page.confidence ?? 0) < 60);
       return {
         industry,
         strength: strong ? "较强" : "待确认",
@@ -357,26 +291,34 @@ export function identifyIndustries(pages: ReportPage[]): IndustryCandidate[] {
     .sort((a, b) => b.score - a.score)
     .slice(0, 3) as IndustryCandidate[];
 }
-export function makeReviewInput(
-  industry: string,
-  issue: string,
-  findings: ReportFinding[],
-  pages: ReportPage[]
-): ReviewInput {
+function reviewEvidence(evidence: Evidence[]): Evidence[] {
+  const result: Evidence[] = [];
+  for (const e of evidence) {
+    if (result.length >= 4)
+      break;
+    result.push({ id: e.id, page: e.page, quote: e.quote, method: e.method, ...(e.confidence !== undefined ? { confidence: e.confidence } : {}) });
+    for (const context of e.context ?? []) {
+      if (result.length >= 4)
+        break;
+      if (result.some(r => r.page === context.page && r.quote === context.quote))
+        continue;
+      result.push({ id: `${e.id}-c${result.length}`, page: context.page, quote: context.quote, method: e.method });
+    }
+  }
+  return result;
+}
+export function makeReviewInput(industry: string, issue: string, findings: ReportFinding[], pages: ReportPage[]): ReviewInput {
   return {
     version: REPORT_FRAMEWORK_VERSION,
     industry,
     issue,
-    partialDocument: pages.some(
-      p =>
-        p.method === "unread" ||
-        (p.method === "ocr" && (p.confidence ?? 0) < 60)
-    ),
+    partialDocument: pages.some(p => p.method === "unread" ||
+      (p.method === "ocr" && (p.confidence ?? 0) < 60)),
     criteria: criteriaForIssue(issue).map(c => ({
       id: c.id,
       label: c.label,
       requirement: c.requirement,
-      evidence: findings.find(f => f.criterionId === c.id)?.evidence ?? [],
+      evidence: reviewEvidence(findings.find(f => f.criterionId === c.id)?.evidence ?? []),
     })),
   };
 }

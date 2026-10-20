@@ -18,8 +18,8 @@ for(const path of paths){
  try{
   for(let n=1;n<=pdf.numPages;n++){
    const page=await pdf.getPage(n);const content=await page.getTextContent();
-   const {text,tables}=textFromPdfItems(content.items.filter(i=>"str"in i) as PdfTextItem[],page.getViewport({scale:1}).width);
-   pages.push({page:n,text,tables,method:text.replace(/\s/g,"").length>=35?"text":"unread"});page.cleanup();
+   const {text,tables,marginTexts,marginRanges}=textFromPdfItems(content.items.filter(i=>"str"in i) as PdfTextItem[],page.getViewport({scale:1}).width,page.getViewport({scale:1}).height);
+   pages.push({page:n,text,tables,marginTexts,marginRanges,method:text.replace(/\s/g,"").length>=35?"text":"unread"});page.cleanup();
   }
   const extractMs=Math.round(performance.now()-start);const reviewStart=performance.now();
   const index=buildEvidenceIndex(pages);const candidates=identifyIndustries(pages);const industry=candidates[0]?.industry;
@@ -29,11 +29,11 @@ for(const path of paths){
    assert.equal(findings.length,criteriaForIssue(issue).length);
    for(const finding of findings){
     assert(!["disclosed","partial"].includes(finding.status),"Rule retrieval must not claim semantic sufficiency");
-    for(const evidence of finding.evidence)assert(pages[evidence.page-1].text.includes(evidence.quote),"Quote/page mismatch");
+    for(const evidence of finding.evidence){assert(pages[evidence.page-1].text.includes(evidence.quote),"Quote/page mismatch");for(const context of evidence.context??[])assert(pages[context.page-1].text.includes(context.quote),"Context/page mismatch");}
    }
   }
   const exported=buildReportCsv({file:path,industry:industry.name,results,pages});
-  assert(exported.csv.startsWith("\uFEFF"));assert(exported.rowCount>=Object.values(results).flat().length);
+  assert(exported.csv.startsWith("\uFEFF"));assert.equal(exported.rowCount,Object.values(results).flat().length);
   console.log(JSON.stringify({file:path,pages:pages.length,textPages:pages.filter(p=>p.method==="text").length,industry:industry.name,industryPage:candidates[0].evidence.page,issues:industry.keyIssues.length,checks:Object.values(results).flat().length,related:Object.values(results).flat().filter(f=>f.evidence.length).length,csvEvidenceRows:exported.rowCount,tablePages:pages.filter(p=>p.tables?.length).length,extractMs,reviewMs:Math.round(performance.now()-reviewStart)}));
  }finally{await pdf.destroy();}
 }
