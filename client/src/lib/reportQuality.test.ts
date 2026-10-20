@@ -39,8 +39,9 @@ describe("report relevance and boundary regressions", () => {
     expect(f.gaps.join("")).toContain("不同值");
   });
   it("covers all emission scopes, keeps local boundary notes and preserves malformed numbers", () => {
-    const pages = [tablePage(50, [["范围 1 碳排放", "吨", "292.47", "520.60", "497.10"]], "注：如上表格指标仅为某园区。"), tablePage(128, [["总直接温室气体排放（范围 1）", "吨二氧化碳当量", "4,652.59", "4,638.01", "4,690.22"], ["基于位置（范围 2）", "吨二氧化碳当量", "50,010.54", "56,475.75", "50.887.58"], ["总间接温室气体排放（范围 3）", "吨二氧化碳当量", "1", "2", "3"]]), { page: 129, method: "text" as const, text: "注：\n范围 1-3：采用温室气体核算体系。自2025年依SBTI扩大核算边界，2023与2024年数据已重述。" }];
+    const pages = [tablePage(50, [["范围 1 碳排放", "吨", "292.47", "520.60", "497.10"], ["拥有 ISO 45001 认证的营运场所所占百分比", "%", "100", "100", "100"]], "注：如上表格指标仅为某园区。"), tablePage(128, [["总直接温室气体排放（范围 1）", "吨二氧化碳当量", "4,652.59", "4,638.01", "4,690.22"], ["基于位置（范围 2）", "吨二氧化碳当量", "50,010.54", "56,475.75", "50.887.58"], ["总间接温室气体排放（范围 3）", "吨二氧化碳当量", "1", "2", "3"]]), { page: 129, method: "text" as const, text: "注：\n范围 1-3：采用温室气体核算体系。自2025年依SBTI扩大核算边界，2023与2024年数据已重述。" }];
     const f = find(pages, "Carbon Emissions", 1);
+    expect(find(pages, "Health & Safety", 2).summary).toContain("局部场所口径");
     expect(f.evidence.slice(0, 3).every(e => e.page === 128)).toBe(true);
     expect(f.evidence[0].context?.some(c => c.page === 129 && c.quote.includes("重述"))).toBe(true);
     expect(f.evidence.find(e => e.page === 50)?.context?.some(c => c.quote.includes("仅为某园区"))).toBe(true);
