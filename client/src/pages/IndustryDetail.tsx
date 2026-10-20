@@ -108,7 +108,7 @@ export default function IndustryDetail() {
             href="/"
             className="hover:text-foreground transition-colors no-underline"
           >
-            行业查询
+            首页
           </Link>
           <ChevronRight className="w-3.5 h-3.5" />
           <span className="text-foreground font-medium">

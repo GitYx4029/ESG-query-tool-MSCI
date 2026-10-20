@@ -76,7 +76,7 @@ export default function MaterialityMap() {
       <Header />
       <main className="container py-5 space-y-5">
         <Link href="/" className="text-sm text-muted-foreground">
-          ← 行业查询
+          ← 首页
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>

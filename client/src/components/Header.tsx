@@ -1,17 +1,15 @@
 /*
  * Header Component
  * 设计风格：知识图谱风格，ESG三色体系
- * 顶部导航栏，包含Logo、搜索入口和导航链接
+ * 顶部导航栏，包含Logo和导航链接
  */
 import { Link, useLocation } from "wouter";
-import { Search, Leaf } from "lucide-react";
+import { Leaf } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "@/hooks/useNavigate";
 import { AnalysisEntryLink } from "./AnalysisGate";
 
 export default function Header() {
   const [location] = useLocation();
-  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -34,13 +32,7 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-1.5">
-          <Link
-            href="/report-analysis"
-            className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${location === "/report-analysis" ? "bg-blue-50 text-blue-800 border-blue-300" : "border-border text-foreground hover:bg-blue-50"}`}
-          >
-            报告对照分析
-          </Link>
+        <nav aria-label="主导航" className="hidden md:flex items-center gap-1.5">
           <Link
             href="/"
             className={`px-3 py-2 rounded-lg text-sm font-semibold transition-colors no-underline border ${
@@ -49,7 +41,7 @@ export default function Header() {
                 : "text-foreground border-esg-env/20 bg-esg-env-bg/30 hover:bg-esg-env-bg/60 hover:border-esg-env/40"
             }`}
           >
-            行业查询
+            首页
           </Link>
           <Link
             href="/materiality-map"
@@ -60,6 +52,12 @@ export default function Header() {
             }`}
           >
             重要性议题地图
+          </Link>
+          <Link
+            href="/report-analysis"
+            className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${location === "/report-analysis" ? "bg-blue-50 text-blue-800 border-blue-300" : "border-border text-foreground hover:bg-blue-50"}`}
+          >
+            ESG报告对照
           </Link>
           <AnalysisEntryLink
             href="/company"
@@ -110,14 +108,7 @@ export default function Header() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border/50 bg-white/95 backdrop-blur-md">
-          <nav className="container py-3 flex flex-col gap-1">
-            <Link
-              href="/report-analysis"
-              onClick={() => setMobileMenuOpen(false)}
-              className="px-3 py-3 rounded-lg text-sm font-semibold border border-blue-200 text-blue-800 no-underline"
-            >
-              报告对照分析
-            </Link>
+          <nav aria-label="移动端主导航" className="container py-3 flex flex-col gap-1">
             <Link
               href="/"
               className={`px-3 py-2 rounded-lg text-sm font-semibold no-underline border ${
@@ -127,7 +118,7 @@ export default function Header() {
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
-              行业查询
+              首页
             </Link>
             <Link
               href="/materiality-map"
@@ -139,6 +130,13 @@ export default function Header() {
               onClick={() => setMobileMenuOpen(false)}
             >
               重要性议题地图
+            </Link>
+            <Link
+              href="/report-analysis"
+              onClick={() => setMobileMenuOpen(false)}
+              className="px-3 py-3 rounded-lg text-sm font-semibold border border-blue-200 text-blue-800 no-underline"
+            >
+              ESG报告对照
             </Link>
             <AnalysisEntryLink
               href="/company"
