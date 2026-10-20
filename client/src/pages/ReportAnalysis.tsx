@@ -751,8 +751,8 @@ export default function ReportAnalysis() {
                               {f.elements && f.elements.length > 0 && (
                                 <div className="rounded-lg bg-slate-50 p-3 text-xs space-y-2">
                                   <p className="font-medium">表格要素摘录 · 保留原指标口径</p>
-                                  {f.elements.map(element => (
-                                    <p key={element.label} className="leading-relaxed">
+                                  {f.elements.map((element, elementIndex) => (
+                                    <p key={`${element.page ?? "missing"}-${elementIndex}`} className="leading-relaxed">
                                       <strong>{element.label}：</strong>{element.detail}
                                       {element.page ? `（文件第${element.page}页）` : ""}
                                     </p>

@@ -72,7 +72,10 @@ export function reviewGaps(c: ReportCriterion, evidence: Evidence[], elements: R
 export function findingSummary(evidence: Evidence[], elements: ReportElement[], criterion?: ReportCriterion) {
   const located = elements.filter(e => e.page);
   if (located.length)
-    return located.slice(0, 3).map(e => `${e.label}：${e.detail.split("；")[0]}${/异常|不同值/.test(e.detail) ? "（数值待核实）" : ""}（第${e.page}页）`).join("；");
+    return located.slice(0, 3).map(e => {
+      const localScope = evidence.some(source => source.page === e.page && source.quote.includes(e.label) && (source.context ?? []).some(context => /仅为|园区/.test(context.quote)));
+      return `${e.label}：${e.detail.split("；")[0]}${localScope ? "（局部场所口径）" : ""}${/异常|不同值/.test(e.detail) ? "（数值待核实）" : ""}（第${e.page}页）`;
+    }).join("；");
   if (!evidence.length)
     return "本次未定位到符合检索条件的原文。";
   const source = evidence[0];
