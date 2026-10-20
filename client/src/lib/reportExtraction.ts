@@ -109,21 +109,26 @@ export async function extractReport(
         const page = await pdf.getPage(n);
         let text = "";
         let tables: ReportPage["tables"] = [];
+        let marginTexts: string[] = [];
+        let marginRanges: ReportPage["marginRanges"] = [];
         try {
           const content = await page.getTextContent();
           const parsed = textFromPdfItems(
             content.items.filter(i => "str" in i) as PdfTextItem[],
-            page.getViewport({ scale: 1 }).width
+            page.getViewport({ scale: 1 }).width,
+            page.getViewport({ scale: 1 }).height
           );
           text = parsed.text;
           tables = parsed.tables;
+          marginTexts = parsed.marginTexts;
+          marginRanges = parsed.marginRanges;
         } catch {
           /* Unreadable pages can be retried with OCR. */
         }
         const readable =
           text.replace(/\s/g, "").length >= 35 &&
           (text.match(/[\uFFFD]/g)?.length ?? 0) < text.length * 0.1;
-        pages.push({ page: n, text, tables, method: readable ? "text" : "unread" });
+        pages.push({ page: n, text, tables, marginTexts, marginRanges, method: readable ? "text" : "unread" });
         page.cleanup();
       }
     } else {

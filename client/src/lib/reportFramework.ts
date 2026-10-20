@@ -44,12 +44,12 @@ const rows: Record<string, Row[]> = {
     [
       "员工与承包商死亡人数",
       "按年度分别列明员工、承包商因工死亡人数和覆盖范围，零值也属于数据。",
-      "因工死亡|因公死亡|工伤死亡|死亡人数|死亡事故|死亡的员工|fatalit",
+      "因工死亡|因公死亡|因公亡故|工伤死亡|死亡人数|死亡事故|死亡的员工|fatalit",
     ],
     [
       "工伤率及计算口径",
       "披露LTIR或TRIR、年度、工时分母及员工/承包商范围；不将普通事故数等同于工伤率。",
-      "LTIR|LTIFR|TRIR|TRIFR|失时|损工事故率|工伤率|每百万工时安全事故率|可记录工伤|lost time|recordable injury",
+      "LTIR|LTIFR|TRIR|TRIFR|伤害频率|百万工时损失率|失时|损工事故率|工伤率|每百万工时安全事故率|可记录工伤|lost time|recordable injury",
     ],
   ],
   "Product Safety & Quality": [
@@ -100,7 +100,7 @@ const rows: Record<string, Row[]> = {
     [
       "排放数据与边界",
       "列明范围一、范围二及相关范围三排放、单位、年度、组织边界和核算方法。",
-      "范围一|范围二|范围三|温室气体|碳排放|scope 1|scope 2|scope 3|GHG",
+      "范围一|范围二|范围三|范围 1|范围 2|范围 3|温室气体|碳排放|scope 1|scope 2|scope 3|GHG",
     ],
     [
       "减排目标",
@@ -338,17 +338,17 @@ const rows: Record<string, Row[]> = {
     [
       "供应链劳工政策",
       "说明供应商劳动、人权及行为准则范围。",
-      "供应商行为准则|供应链劳工|供应商人权|supplier code|supply chain labor",
+      "供应商行为准则|供应商行为守则|可持续采购章程|劳工和人权要求|供应链劳工|供应商人权|supplier code|supply chain labor",
     ],
     [
       "风险与审核",
       "披露供应商劳工风险、审计范围及整改跟踪。",
-      "供应商审核|供应商审计|社会责任审核|supplier audit|labor audit",
+      "供应商审核|供应商审计|社会责任审核|社会责任现场审核|社会责任评估|supplier audit|labor audit",
     ],
     [
       "覆盖与整改绩效",
       "披露受审核供应商比例、问题和整改结果及年度。",
-      "供应商整改|审核覆盖|整改关闭|corrective action|audit coverage",
+      "供应商整改|审核覆盖|整改关闭|社会责任现场审核|社会责任评估|corrective action|audit coverage",
     ],
   ],
   "Chemical Safety": [

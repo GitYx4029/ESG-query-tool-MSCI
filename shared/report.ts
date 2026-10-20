@@ -21,6 +21,13 @@ export interface ReportPage {
   method: "text" | "ocr" | "unread";
   confidence?: number;
   tables?: ReportTable[];
+  /** Edge text candidates; excluded from retrieval only when repeated across pages. */
+  marginTexts?: string[];
+  marginRanges?: Array<{text:string;start:number;end:number}>;
+}
+export interface EvidenceContext {
+  page: number;
+  quote: string;
 }
 export interface Evidence {
   id: string;
@@ -28,6 +35,8 @@ export interface Evidence {
   quote: string;
   method: "text" | "ocr";
   confidence?: number;
+  role?: "body" | "table" | "case" | "statement" | "assurance";
+  context?: EvidenceContext[];
 }
 export interface ReportCriterion {
   id: string;
