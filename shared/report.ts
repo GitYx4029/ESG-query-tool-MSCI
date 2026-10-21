@@ -1,11 +1,7 @@
 // Provider-neutral contract. Reports and excerpts are never persisted by the API.
 export const REPORT_FRAMEWORK_VERSION = "disclosure-review-2026-10-v1";
 export type DisclosureStatus =
-  | "related"
-  | "disclosed"
-  | "partial"
-  | "not_found"
-  | "insufficient";
+  "related" | "disclosed" | "partial" | "not_found" | "insufficient";
 export interface ReportTable {
   columns: string[];
   rows: string[][];
@@ -14,6 +10,7 @@ export interface ReportElement {
   label: string;
   detail: string;
   page?: number;
+  quote?: string;
 }
 export interface ReportPage {
   page: number;
@@ -21,9 +18,11 @@ export interface ReportPage {
   method: "text" | "ocr" | "unread";
   confidence?: number;
   tables?: ReportTable[];
+  /** Text layer contains damaged glyphs; retry selected pages with OCR. */
+  needsOcr?: boolean;
   /** Edge text candidates; excluded from retrieval only when repeated across pages. */
   marginTexts?: string[];
-  marginRanges?: Array<{text:string;start:number;end:number}>;
+  marginRanges?: Array<{ text: string; start: number; end: number }>;
 }
 export interface EvidenceContext {
   page: number;

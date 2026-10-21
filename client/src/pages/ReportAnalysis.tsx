@@ -8,20 +8,14 @@ import {
   Search,
   X,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import Header from "@/components/Header";
 import FeedbackPrompt from "@/components/FeedbackPrompt";
-import {
-  getAllIndustries,
-  industryNamesCN,
-  issueNamesCN,
-  pillarNamesCN,
-  getImportanceLabelCN,
-} from "@/lib/esgData";
-import { importanceColors } from "@/lib/importanceStyle";
-import { criteriaForIssue } from "@/lib/reportFramework";
-import { buildReportCsv, reviewLabels, type ManualReview } from "@/lib/reportExport";
+import ReportResults from "@/components/ReportResults";
+import { EvidenceCard } from "@/components/ReportEvidence";
+import { readableExcerpt } from "@/lib/reportPresentation";
+import { getAllIndustries, industryNamesCN, issueNamesCN } from "@/lib/esgData";
+import { buildReportCsv, type ManualReview } from "@/lib/reportExport";
 import {
   analyzeLocally,
   buildEvidenceIndex,
@@ -36,10 +30,10 @@ import {
   type ExtractionSession,
   type ExtractionProgress,
 } from "@/lib/reportExtraction";
+import { selectOcrPages } from "@/lib/reportQuality";
 import { defaultCommunityOrigin } from "@/lib/backendConfig";
 import {
   REPORT_FRAMEWORK_VERSION,
-  statusLabels,
   validateReviewOutput,
   type Evidence,
   type ReportPage,
@@ -48,13 +42,6 @@ import {
 const apiOrigin = (
   import.meta.env.VITE_REPORT_API_ORIGIN || defaultCommunityOrigin
 ).replace(/\/+$/, "");
-const statusColor = {
-  related: "bg-blue-50 text-blue-800",
-  disclosed: "bg-green-50 text-green-800",
-  partial: "bg-amber-50 text-amber-800",
-  not_found: "bg-slate-100 text-slate-700",
-  insufficient: "bg-amber-50 text-amber-800",
-};
 export default function ReportAnalysis() {
   const [files, setFiles] = useState<File[]>([]);
   const [pages, setPages] = useState<ReportPage[]>([]);
@@ -85,6 +72,7 @@ export default function ReportAnalysis() {
   const index = useMemo(() => buildEvidenceIndex(pages), [pages]);
   const candidates = useMemo(() => identifyIndustries(pages), [pages]);
   const unread = pages.filter(p => p.method === "unread");
+  const damaged = pages.filter(p => p.needsOcr);
   const weak = pages.filter(
     p => p.method === "ocr" && (p.confidence ?? 0) < 60
   );
@@ -158,10 +146,7 @@ export default function ReportAnalysis() {
       const current = await extractReport(next, abort.signal, setProgress);
       session.current = current;
       setPages([...current.pages]);
-      const scans = current.pages
-        .filter(p => p.method === "unread")
-        .slice(0, 8)
-        .map(p => p.page);
+      const scans = selectOcrPages(current.pages);
       if (scans.length) {
         try {
           await current.ocr(scans, abort.signal, setProgress);
@@ -185,7 +170,9 @@ export default function ReportAnalysis() {
       }
       setError(
         abort.signal.aborted
-          ? partial.some(p => p.method !== "unread") ? "识别已取消；已识别的页面仍可分析。" : "识别已取消，可以重新选择报告。"
+          ? partial.some(p => p.method !== "unread")
+            ? "识别已取消；已识别的页面仍可分析。"
+            : "识别已取消，可以重新选择报告。"
           : e instanceof Error
             ? e.message
             : "报告读取失败，请检查文件或重试。"
@@ -199,7 +186,7 @@ export default function ReportAnalysis() {
   }
   async function continueOcr() {
     if (!session.current) return;
-    let numbers = unread.slice(0, 20).map(p => p.page);
+    let numbers = selectOcrPages(pages, 20);
     if (ocrRange.trim()) {
       const found = new Set<number>();
       for (const part of ocrRange.split(/[，,]/)) {
@@ -278,10 +265,14 @@ export default function ReportAnalysis() {
       if (!response.ok) throw new Error(body.error || "AI服务暂不可用");
       const verified = validateReviewOutput(body, input).findings.map(f => {
         const original = local.find(l => l.criterionId === f.criterionId);
-        return {...f, elements: original?.elements, evidence: f.evidence.map(e => {
-          const source = original?.evidence.find(s => s.id === e.id);
-          return {...e, role: source?.role, context: source?.context};
-        })};
+        return {
+          ...f,
+          elements: original?.elements,
+          evidence: f.evidence.map(e => {
+            const source = original?.evidence.find(s => s.id === e.id);
+            return { ...e, role: source?.role, context: source?.context };
+          }),
+        };
       });
       // Runtime returns canonical evidence; reconstruct the same validator payload.
       aiCache.current.set(key, verified);
@@ -315,7 +306,10 @@ export default function ReportAnalysis() {
     const { csv } = buildReportCsv({
       file: demo ? "虚构演示" : files.map(f => f.name).join(" / "),
       industry: industryNamesCN[industryName] ?? industryName,
-      results, pages, reviews, detail,
+      results,
+      pages,
+      reviews,
+      detail,
     });
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob),
@@ -464,6 +458,12 @@ export default function ReportAnalysis() {
                 {unread.length} 页
                 {weak.length > 0 ? ` · ${weak.length}页OCR可信度较低` : ""}
               </p>
+              {damaged.length > 0 && (
+                <p className="text-sm text-amber-800">
+                  另有{damaged.length}
+                  页文字层含乱码，建议补充图片识别后核验数字。
+                </p>
+              )}
               {unread.length > 0 && (
                 <p className="text-sm text-amber-800">
                   未识别页：
@@ -485,7 +485,7 @@ export default function ReportAnalysis() {
                       <input
                         value={ocrRange}
                         onChange={e => setOcrRange(e.target.value)}
-                        placeholder="例如 1-5,8；留空处理下20个未识别页"
+                        placeholder="例如 1-5,8；留空优先处理下20个待补识别页"
                         className="block w-full border rounded-lg p-2 mt-1"
                       />
                     </label>
@@ -604,7 +604,12 @@ export default function ReportAnalysis() {
                 导出核验摘要 CSV
               </button>
             </div>
-            <button className="text-sm text-muted-foreground underline" onClick={() => exportCsv(true)}>导出逐条证据明细 CSV</button>
+            <button
+              className="text-sm text-muted-foreground underline"
+              onClick={() => exportCsv(true)}
+            >
+              导出逐条证据明细 CSV
+            </button>
             <p className="text-sm text-muted-foreground leading-relaxed">
               本工具按 MSCI
               议题组织披露核验项，核验清单为项目整理。找到线索不等于充分披露，不生成评级或评分。页码使用文件页序；年报、治理报告等资料可能需要另行补充。
@@ -660,130 +665,20 @@ export default function ReportAnalysis() {
                 ? "AI精读仅发送当前议题的相关原文片段至模型服务；点击后开始，同一报告同一议题可复用结果。"
                 : "AI精读尚未启用；本地报告识别、证据对照与导出可正常使用。"}
             </p>
-            {industry.keyIssues.map((issue, i) => {
-              const findings = results[issue.name] ?? [];
-              const criteria = criteriaForIssue(issue.name);
-              return (
-                <details
-                  key={issue.name}
-                  open={i === 0}
-                  className="border rounded-xl bg-white group"
-                >
-                  <summary className="cursor-pointer p-4 flex flex-wrap items-center gap-2">
-                    <span className="font-semibold flex-1 min-w-48">
-                      {issueNamesCN[issue.name] ?? issue.name}
-                    </span>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${importanceColors[issue.importance]}`}
-                    >
-                      {getImportanceLabelCN(issue.importance)}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {pillarNamesCN[issue.pillar]} ·{" "}
-                      {findings.filter(f => f.evidence.length).length}/
-                      {criteria.length}项有线索
-                    </span>
-                  </summary>
-                  <div className="border-t p-4 space-y-4">
-                    <div className="flex flex-wrap justify-between gap-3 items-center">
-                      <a
-                        href={issue.methodologyUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-blue-800 underline"
-                      >
-                        MSCI 方法学原文 ↗
-                      </a>
-                      <button
-                        disabled={!aiReady || Boolean(aiIssue)}
-                        onClick={() => void runAI(issue.name)}
-                        className="border rounded-lg px-3 py-2 text-sm flex gap-2 items-center disabled:opacity-40"
-                      >
-                        {aiIssue === issue.name ? (
-                          <Loader2 size={16} className="animate-spin" />
-                        ) : (
-                          <Sparkles size={16} />
-                        )}
-                        AI 精读本议题
-                      </button>
-                      {aiIssue === issue.name && (
-                        <button
-                          className="text-sm underline"
-                          onClick={() => controller.current?.abort()}
-                        >
-                          取消精读
-                        </button>
-                      )}
-                    </div>
-                    {aiError[issue.name] && (
-                      <p role="alert" className="text-sm text-amber-800">
-                        {aiError[issue.name]}
-                      </p>
-                    )}
-                    {criteria.map(c => {
-                      const f = findings.find(f => f.criterionId === c.id);
-                      if (!f) return null;
-                      return (
-                        <article
-                          key={c.id}
-                          className="border rounded-lg p-4 space-y-2"
-                        >
-                          <div className="flex flex-wrap gap-2 justify-between">
-                            <h3 className="font-medium text-sm">{c.label}</h3>
-                            <span
-                              className={`text-xs rounded px-2 py-1 ${statusColor[f.status]}`}
-                            >
-                              {statusLabels[f.status]}
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            核验要点：{c.requirement}
-                          </p>
-                          <p className="text-sm leading-relaxed">{f.summary}</p>
-                          {f.gaps.length > 0 && (
-                            <p className="text-sm text-amber-800">
-                              待核验：{f.gaps.join("；")}
-                            </p>
-                          )}
-                          <details className="pt-1">
-                            <summary className="text-sm text-blue-800 cursor-pointer">查看原文与要素（{f.evidence.length}条线索）{f.evidence.length ? ` · 文件第${[...new Set(f.evidence.map(e => e.page))].join("、")}页` : ""}</summary>
-                            <div className="mt-3 space-y-3">
-                              {f.elements && f.elements.length > 0 && (
-                                <div className="rounded-lg bg-slate-50 p-3 text-xs space-y-2">
-                                  <p className="font-medium">表格要素摘录 · 保留原指标口径</p>
-                                  {f.elements.map((element, elementIndex) => (
-                                    <p key={`${element.page ?? "missing"}-${elementIndex}`} className="leading-relaxed">
-                                      <strong>{element.label}：</strong>{element.detail}
-                                      {element.page ? `（文件第${element.page}页）` : ""}
-                                    </p>
-                                  ))}
-                                </div>
-                              )}
-                              {f.evidence.map(e => (
-                                <EvidenceCard
-                                  key={e.id}
-                                  evidence={e}
-                                  open={openEvidence}
-                                />
-                              ))}
-                            </div>
-                          </details>
-                          <label className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                            人工复核
-                            <select aria-label={`${c.label}人工复核`} className="border rounded p-2 bg-white text-foreground"
-                              value={reviews[c.id] ?? "pending"}
-                              onChange={e => setReviews(prev => ({...prev, [c.id]: e.target.value as ManualReview}))}>
-                              {Object.entries(reviewLabels).map(([value,label]) => <option key={value} value={value}>{label}</option>)}
-                            </select>
-                            <span>随证据表导出；刷新或换报告后清除</span>
-                          </label>
-                        </article>
-                      );
-                    })}
-                  </div>
-                </details>
-              );
-            })}
+            <ReportResults
+              industry={industry}
+              results={results}
+              reviews={reviews}
+              onReview={(id, value) =>
+                setReviews(previous => ({ ...previous, [id]: value }))
+              }
+              open={openEvidence}
+              aiReady={aiReady}
+              aiIssue={aiIssue}
+              aiError={aiError}
+              onAi={issue => void runAI(issue)}
+              cancelAi={() => controller.current?.abort()}
+            />
             <FeedbackPrompt industry={industry.name} />
           </section>
         )}
@@ -808,7 +703,7 @@ export default function ReportAnalysis() {
                 </button>
               </div>
               <p className="text-sm whitespace-pre-wrap bg-slate-50 border rounded-lg p-3 leading-relaxed">
-                {viewer.evidence.quote}
+                {readableExcerpt(viewer.evidence.quote, viewer.evidence.role)}
               </p>
               {viewer.url &&
                 (/\.pdf$/i.test(files[0]?.name ?? "") ? (
@@ -838,39 +733,6 @@ export default function ReportAnalysis() {
           </div>
         )}
       </main>
-    </div>
-  );
-}
-function EvidenceCard({
-  evidence,
-  open,
-}: {
-  evidence: Evidence;
-  open: (e: Evidence) => void;
-}) {
-  return (
-    <div className="bg-slate-50 border rounded-lg p-3">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
-        <button
-          className="text-blue-800 underline"
-          onClick={() => open(evidence)}
-        >
-          第{evidence.page}页 · 查看原文
-        </button>
-        <span className="text-muted-foreground">
-          {evidence.role === "table" ? "绩效表 · " : evidence.role === "case" ? "案例 · " : evidence.role === "statement" ? "声明 · " : evidence.role === "assurance" ? "鉴证 · " : "正文 · "}
-          {evidence.method === "ocr"
-            ? `OCR · 可信度${Math.round(evidence.confidence ?? 0)}%，请核对原图`
-            : "PDF文字 · 文件页序"}
-        </span>
-      </div>
-      <blockquote className="mt-2 text-sm leading-relaxed whitespace-pre-wrap">
-        {evidence.quote}
-      </blockquote>
-      {(evidence.context ?? []).map((context, i) => <div key={`${context.page}-${i}`} className="mt-3 border-t pt-2 text-xs text-muted-foreground whitespace-pre-wrap">
-        <button className="text-blue-800 underline mb-1" onClick={() => open({...evidence, page: context.page, quote: context.quote, context: []})}>表头／范围注释 · 文件第{context.page}页</button>
-        <p>{context.quote}</p>
-      </div>)}
     </div>
   );
 }
