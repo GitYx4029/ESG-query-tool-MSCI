@@ -2,6 +2,8 @@ import type { PDFDocumentProxy, PDFDocumentLoadingTask } from "pdfjs-dist";
 import type { Worker } from "tesseract.js";
 import type { ReportPage } from "@shared/report";
 import { textFromPdfItems, type PdfTextItem } from "./reportText";
+import { parseOcrPage, enhanceOcrContrast, mergeOcrHeader } from "./reportOcr";
+import { textQuality } from "./reportQuality";
 export interface ExtractionProgress {
   message: string;
   current: number;
@@ -86,9 +88,8 @@ export async function extractReport(
         throw new Error("文件内容不是有效PDF，请检查格式。");
       checkAbort(signal);
       const pdfjs = await import("pdfjs-dist");
-      const { default: workerUrl } = await import(
-        "pdfjs-dist/build/pdf.worker.min.mjs?url"
-      );
+      const { default: workerUrl } =
+        await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
       pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
       task = pdfjs.getDocument({
         data,
@@ -125,10 +126,16 @@ export async function extractReport(
         } catch {
           /* Unreadable pages can be retried with OCR. */
         }
-        const readable =
-          text.replace(/\s/g, "").length >= 35 &&
-          (text.match(/[\uFFFD]/g)?.length ?? 0) < text.length * 0.1;
-        pages.push({ page: n, text, tables, marginTexts, marginRanges, method: readable ? "text" : "unread" });
+        const quality = textQuality(text);
+        pages.push({
+          page: n,
+          text,
+          tables,
+          marginTexts,
+          marginRanges,
+          needsOcr: quality.needsOcr,
+          method: quality.readable ? "text" : "unread",
+        });
         page.cleanup();
       }
     } else {
@@ -155,7 +162,7 @@ export async function extractReport(
           current: 0,
           total: numbers.length,
         });
-        const { createWorker } = await import("tesseract.js");
+        const { createWorker, PSM } = await import("tesseract.js");
         const pending = createWorker("chi_sim+eng", 1, {
           workerPath: assets() + "ocr-worker.min.js",
           corePath: assets(),
@@ -223,14 +230,93 @@ export async function extractReport(
             source = canvas;
           }
           try {
-            const { data } = await withAbort(
-              worker.recognize(source),
+            let headerBands: Array<{ top: number; height: number }> = [];
+            let headerImage: HTMLCanvasElement | undefined;
+            if (canvas) {
+              const context = canvas.getContext("2d");
+              if (context) {
+                const pixels = context.getImageData(
+                  0,
+                  0,
+                  canvas.width,
+                  canvas.height
+                );
+                headerBands = enhanceOcrContrast(
+                  pixels.data,
+                  canvas.width,
+                  canvas.height
+                );
+                if (headerBands.length) {
+                  headerImage = document.createElement("canvas");
+                  headerImage.width = canvas.width;
+                  headerImage.height = canvas.height;
+                  headerImage.getContext("2d")?.putImageData(pixels, 0, 0);
+                }
+              }
+            }
+            const recognized = await withAbort(
+              worker.recognize(source, {}, { blocks: true }),
               nextSignal
             );
             checkAbort(nextSignal);
+            let data = recognized.data;
+            for (const band of headerBands) {
+              checkAbort(nextSignal);
+              if (!canvas) break;
+              const headerCanvas = document.createElement("canvas");
+              const top = Math.max(0, band.top - 3),
+                height = Math.min(canvas.height - top, band.height + 6);
+              headerCanvas.width = canvas.width * 2;
+              headerCanvas.height = height * 2;
+              const context = headerCanvas.getContext("2d");
+              if (!context) continue;
+              context.drawImage(
+                headerImage ?? canvas,
+                0,
+                top,
+                canvas.width,
+                height,
+                0,
+                0,
+                headerCanvas.width,
+                headerCanvas.height
+              );
+              try {
+                await worker.setParameters({
+                  tessedit_pageseg_mode: PSM.SINGLE_LINE,
+                });
+                const extra = await withAbort(
+                  worker.recognize(headerCanvas, {}, { blocks: true }),
+                  nextSignal
+                );
+                if (
+                  /单位|unit/i.test(extra.data.text) &&
+                  /20\d{2}/.test(extra.data.text.replace(/\s/g, ""))
+                )
+                  data = {
+                    ...data,
+                    ...mergeOcrHeader(data, extra.data, { left: 0, top }),
+                  };
+              } finally {
+                headerCanvas.width = headerCanvas.height = 0;
+                if (!nextSignal.aborted)
+                  await worker.setParameters({
+                    tessedit_pageseg_mode: PSM.AUTO,
+                  });
+              }
+            }
+            if (headerImage) {
+              headerImage.width = headerImage.height = 0;
+            }
+            const parsed = parseOcrPage(
+              data,
+              canvas?.width ?? 2200,
+              canvas?.height ?? 2200
+            );
             pages[n - 1] = {
               page: n,
-              text: data.text.trim(),
+              ...parsed,
+              needsOcr: false,
               method: data.text.trim().length >= 20 ? "ocr" : "unread",
               confidence: data.confidence,
             };

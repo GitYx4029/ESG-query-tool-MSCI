@@ -161,7 +161,7 @@ const rows: Record<string, Row[]> = {
     [
       "量化进展",
       "披露产品排放、强度或低碳产品销售数据及口径。",
-      "碳足迹认证|产品排放|carbon footprint|carbon intensity",
+      "碳足迹认证|碳足迹证书|碳足迹测算覆盖率|碳足迹核算覆盖率|产品排放|carbon footprint|carbon intensity",
     ],
   ],
   "Biodiversity & Land Use": [
@@ -338,7 +338,7 @@ const rows: Record<string, Row[]> = {
     [
       "供应链劳工政策",
       "说明供应商劳动、人权及行为准则范围。",
-      "供应商行为准则|供应商行为守则|可持续采购章程|劳工和人权要求|供应链劳工|供应商人权|supplier code|supply chain labor",
+      "商业合作伙伴行为准则|合作伙伴行为准则|供应商行为规范|劳工权益|供应商行为准则|供应商行为守则|可持续采购章程|劳工和人权要求|供应链劳工|供应商人权|supplier code|supply chain labor",
     ],
     [
       "风险与审核",
